@@ -13,14 +13,140 @@
 				font-family: Tahoma;
 				font-size: 13px;
 			}
+
+			#stats {
+				position: absolute;
+				left: 0px;
+				right: 0px;
+			}
 		</style>
 	</head>
 	<body>
 
-		<script src="three.min.js"></script>
+		<script src="js/three.js"></script>
+		<script src="js/stats.js"></script>
+		<script src="js/firstpersoncontrols.js"></script>
 
 		<script>
-			// game code
+
+			var WIDTH = window.innerWidth,
+				HEIGHT = window.innerHeight;
+			var ASPECT = WIDTH / HEIGHT;
+			var NEAR = .1,
+				FAR = 1000;
+			var UNIT = 100,
+				WALLSIZE = 16;
+
+			var t = THREE,
+				stats, scene, camera, renderer, clock, controls;
+
+			var map = [
+				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
+				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
+				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
+				[1, 0, 0, 1, 1, 0, 1, 1, 0, 1], 
+				[1, 0, 0, 1, 1, 0, 1, 1, 0, 1], 
+				[1, 0, 0, 1, 1, 0, 1, 1, 0, 1], 
+				[1, 0, 0, 1, 0, 0, 1, 0, 0, 1], 
+				[1, 1, 0, 1, 0, 0, 1, 0, 0, 1], 
+				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
+				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+			],
+			mapWidth = map.length,
+			mapHeight = map[0].length;
+
+			init();
+			animate();
+
+			function init() {
+				// CTRL+U = source, F12 = dev tools
+				stats = new Stats();
+				stats.setMode(0);
+
+				document.body.appendChild(stats.domElement);
+
+				// Creates a new scene object
+				scene = new t.Scene();
+				// Adds fog to the scene
+				//scene.fog(0xeeeeee, NEAR, FAR);
+				
+				// create a new "Perspective" Camera
+				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
+				// Change the cameras position so it is centered within the map
+				camera.position.y = UNIT * .2;
+
+				// Creates a new WebGL Renderer (used to render everything inc. scene)
+				renderer = new t.WebGLRenderer();
+				// Sets the Renderer to the window width and height
+				renderer.setSize(WIDTH, HEIGHT);
+				// Add the renderers DOM element to the window
+				document.body.appendChild(renderer.domElement);
+
+				// Call the FirstPersonControls library and set the variables
+				controls = new t.FirstPersonControls(camera);
+				controls.movementSpeed = 30;
+				controls.lookSpeed = 0.2;
+				controls.lookVertical = false;
+				controls.noFly = true;
+
+				// Initialize the Clock so we can keep track of delta time etc
+				clock = new t.Clock();
+
+				// Call a function to setup the scene
+				setupScene();
+			}
+
+			function setupScene() {
+				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
+				var geometry = new t.BoxGeometry(10, 10, 10), texture, cube;
+
+				for (var i = 0; i < mapWidth; i++) {
+					for (var j = 0; j < mapHeight; j++) {
+						// If the current map array value is 0 then we know its empty space, else it's a wall
+						if (map[i][j] == 0) {
+							// Set the texture to a very basic material with a random colour and assign the side to FrontSide so it only renders whatever the camera can see
+							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
+							// Assign the correct geometry and texture
+							cube = new t.Mesh(geometry, texture);
+							// Set the position to the floor level
+							cube.position.set(-30 + (i * 10), UNIT * .1, -30 + (j * 10));
+							// Add the cube to the scene
+							scene.add(cube);
+
+							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
+							cube = new t.Mesh(geometry, texture);
+							// Set the position to the ceiling level
+							cube.position.set(-30 + (i * 10), UNIT * .3, -30 + (j * 10));
+							scene.add(cube);
+						} else if (map[i][j] == 1) {
+							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
+							cube = new t.Mesh(geometry, texture);
+							// Set the position to the wall level
+							cube.position.set(-30 + (i * 10), UNIT * .2, -30 + (j * 10));
+							scene.add(cube);
+						}
+					}
+				}
+			}
+
+			function animate() {
+				stats.begin();
+
+				update();
+				render();
+
+				stats.end();
+				requestAnimationFrame(animate);
+			}
+
+			function update() {
+				var delta = clock.getDelta();
+				controls.update(delta);
+			}
+
+			function render() {
+				renderer.render(scene, camera);
+			}
 		</script>
 	</body>
 </html>
