@@ -98,29 +98,37 @@
 
 			function setupScene() {
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
-				var geometry = new t.BoxGeometry(10, 10, 10), texture, cube;
+				var geometry = new t.CubeGeometry(10, 10, 10), texture, cube;
+
+				var wallTexture = t.ImageUtils.loadTexture('textures/wall.png');
+				wallTexture.magFilter = t.NearestFilter;
+				wallTexture.minFilter = t.LinearMipMapLinearFilter;
+
+				var floorTexture = t.ImageUtils.loadTexture('textures/floor.png');
+				floorTexture.magFilter = t.NearestFilter;
+				floorTexture.minFilter = t.LinearMipMapLinearFilter;
+
+				var ceilingTexture = t.ImageUtils.loadTexture('textures/ceiling.png');
+				ceilingTexture.magFilter = t.NearestFilter;
+				ceilingTexture.minFilter = t.LinearMipMapLinearFilter;
 
 				for (var i = 0; i < mapWidth; i++) {
 					for (var j = 0; j < mapHeight; j++) {
 						// If the current map array value is 0 then we know its empty space, else it's a wall
 						if (map[i][j] == 0) {
-							// Set the texture to a very basic material with a random colour and assign the side to FrontSide so it only renders whatever the camera can see
-							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
 							// Assign the correct geometry and texture
-							cube = new t.Mesh(geometry, texture);
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: floorTexture, side: t.FrontSide}));
 							// Set the position to the floor level
 							cube.position.set(-30 + (i * 10), UNIT * .1, -30 + (j * 10));
 							// Add the cube to the scene
 							scene.add(cube);
-
-							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
-							cube = new t.Mesh(geometry, texture);
+							
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: ceilingTexture, side: t.FrontSide}));
 							// Set the position to the ceiling level
 							cube.position.set(-30 + (i * 10), UNIT * .3, -30 + (j * 10));
 							scene.add(cube);
 						} else if (map[i][j] == 1) {
-							texture = new THREE.MeshBasicMaterial({color: Math.random() * 0xffffff, side: t.FrontSide});
-							cube = new t.Mesh(geometry, texture);
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: wallTexture, side: t.FrontSide}));
 							// Set the position to the wall level
 							cube.position.set(-30 + (i * 10), UNIT * .2, -30 + (j * 10));
 							scene.add(cube);
