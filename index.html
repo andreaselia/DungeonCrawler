@@ -40,6 +40,13 @@
 			var t = THREE,
 				stats, scene, camera, renderer, clock, controls;
 
+			var MAINMENU = 0,
+				INSTRUCTIONS = 1,
+				CREDITS = 2,
+				INGAME = 3,
+				PAUSED = 4;
+			var GAMESTATE = 0;
+
 			var map = [
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
@@ -51,9 +58,9 @@
 				[1, 1, 0, 1, 0, 0, 1, 0, 0, 1], 
 				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-			],
-			mapWidth = map.length,
-			mapHeight = map[0].length;
+			];
+			var mapWidth = map.length,
+				mapHeight = map[0].length;
 
 			init();
 			animate();
@@ -68,7 +75,7 @@
 				// Creates a new scene object
 				scene = new t.Scene();
 				// Adds fog to the scene
-				//scene.fog(0xeeeeee, NEAR, FAR);
+				scene.fog = new THREE.FogExp2(0x4a5635, 0.025);
 				
 				// create a new "Perspective" Camera
 				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
@@ -100,17 +107,17 @@
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
 				var geometry = new t.CubeGeometry(10, 10, 10), texture, cube;
 
-				var wallTexture = t.ImageUtils.loadTexture('textures/wall.png');
+				var wallTexture = t.ImageUtils.loadTexture('textures/wall0.png');
 				wallTexture.magFilter = t.NearestFilter;
-				wallTexture.minFilter = t.LinearMipMapLinearFilter;
+				wallTexture.minFilter = t.NearestMipMapLinearFilter;
 
-				var floorTexture = t.ImageUtils.loadTexture('textures/floor.png');
+				var floorTexture = t.ImageUtils.loadTexture('textures/floor0.png');
 				floorTexture.magFilter = t.NearestFilter;
-				floorTexture.minFilter = t.LinearMipMapLinearFilter;
+				floorTexture.minFilter = t.NearestMipMapLinearFilter;
 
-				var ceilingTexture = t.ImageUtils.loadTexture('textures/ceiling.png');
+				var ceilingTexture = t.ImageUtils.loadTexture('textures/ceiling0.png');
 				ceilingTexture.magFilter = t.NearestFilter;
-				ceilingTexture.minFilter = t.LinearMipMapLinearFilter;
+				ceilingTexture.minFilter = t.NearestMipMapLinearFilter;
 
 				for (var i = 0; i < mapWidth; i++) {
 					for (var j = 0; j < mapHeight; j++) {
@@ -122,7 +129,7 @@
 							cube.position.set(-30 + (i * 10), UNIT * .1, -30 + (j * 10));
 							// Add the cube to the scene
 							scene.add(cube);
-							
+
 							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: ceilingTexture, side: t.FrontSide}));
 							// Set the position to the ceiling level
 							cube.position.set(-30 + (i * 10), UNIT * .3, -30 + (j * 10));
