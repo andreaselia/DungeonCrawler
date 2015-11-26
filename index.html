@@ -103,16 +103,13 @@
 				element.requestPointerLock();
 			}, false);
 
-			var WIDTH = window.innerWidth,
-				HEIGHT = window.innerHeight;
+			var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 			var ASPECT = WIDTH / HEIGHT;
-			var NEAR = .1,
-				FAR = 1000;
-			var UNIT = 100,
-				WALLSIZE = 16;
+			var NEAR = .1, FAR = 1000;
+			var UNIT = 100, WALLSIZE = 16;
 
-			var t = THREE,
-				stats, scene, camera, renderer, clock, controls, loader;
+			var t = THREE, stats, loader;
+			var scene, camera, renderer, clock, controls;
 
 			var MAINMENU = 0,
 				INSTRUCTIONS = 1,
@@ -120,8 +117,6 @@
 				INGAME = 3,
 				PAUSED = 4;
 			var GAMESTATE = 0;
-
-			var collisions = [];
 
 			var map = [
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
@@ -135,11 +130,25 @@
 				[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 			];
-			var mapWidth = map.length,
-				mapHeight = map[0].length;
 
-			var raycaster;
 			var velocity = new t.Vector3();
+			var moveSpeed = 20, speedIncrease = 100;
+
+			var walls = [];
+
+			var rays = [
+				new t.Vector3(0, 0, 1), 
+				new t.Vector3(1, 0, 1), 
+				new t.Vector3(1, 0, 0), 
+				new t.Vector3(1, 0, -1), 
+				new t.Vector3(0, 0, -1), 
+				new t.Vector3(-1, 0, -1), 
+				new t.Vector3(-1, 0, 0), 
+				new t.Vector3(-1, 0, 1)
+			];
+
+			var raycaster = new t.Raycaster();
+			var camPos = new t.Vector3();
 
 			init();
 			animate();
@@ -176,10 +185,6 @@
 				// Initialize the Clock so we can keep track of delta time etc
 				clock = new t.Clock();
 
-				// Raycaster for collision
-				//raycaster = new t.Raycaster();
-				raycaster = new t.Raycaster(new t.Vector3(), new t.Vector3(0, UNIT * .2, 0), NEAR, FAR);
-
 				// The texture loader allows textures to be loaded and kept track of
 				loader = new t.TextureLoader();
 
@@ -206,29 +211,29 @@
 					textures[x].minFilter = t.NearestMipMapLinearFilter;
 				}
 
-				for (var i = 0; i < mapWidth; i++) {
-					for (var j = 0; j < mapHeight; j++) {
-						// If the current map array value is 0 then we know its empty space, else it's a wall
-						if (map[i][j] == 0) {
-							// Assign the correct geometry and texture
-							var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-							// Set the position to the floor level
-							cube.position.set(-30 + (i * 10), UNIT * .2, -30 + (j * 10));
-							// Add the cube to the scene
-							scene.add(cube);
-							collisions.push(cube);
+				for (var y = 0; y < map.length; y++) {
+					for (var x = 0; x < map[0].length; x++) {
+						var val = map[y][x];
+						var cube;
 
-							var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-							// Set the position to the ceiling level
-							cube.position.set(-30 + (i * 10), UNIT * .4, -30 + (j * 10));
+						if (val == 0) {
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
+							cube.position.set(-20 + (x * 10), UNIT * .2, -30 + (y * 10));
 							scene.add(cube);
-							collisions.push(cube);
-						} else if (map[i][j] == 1) {
-							var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
-							// Set the position to the wall level
-							cube.position.set(-30 + (i * 10), UNIT * .3, -30 + (j * 10));
+							// walls.push(cube);
+
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
+							cube.position.set(-20 + (x * 10), UNIT * .4, -30 + (y * 10));
 							scene.add(cube);
-							collisions.push(cube);
+							// walls.push(cube);
+						}
+
+						if (val == 1) {
+							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
+							// cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide, wireframe: true}));
+							cube.position.set(-20 + (x * 10), UNIT * .3, -30 + (y * 10));
+							scene.add(cube);
+							walls.push(cube);
 						}
 					}
 				}
@@ -248,45 +253,49 @@
 				var delta = clock.getDelta();
 
 				if (InputHandler.pressed(InputHandler.FORWARD)) {
-					velocity.z -= 100.0 * delta;
+					if (velocity.z > -moveSpeed) {
+						velocity.z -= speedIncrease * delta;
+					}
 				} else if (InputHandler.pressed(InputHandler.BACKWARD)) {
-					velocity.z += 100.0 * delta;
-				} else if (InputHandler.pressed(InputHandler.LEFT)) {
-					velocity.x -= 100.0 * delta;
-				} else if (InputHandler.pressed(InputHandler.RIGHT)) {
-					velocity.x += 100.0 * delta;
+					if (velocity.z < moveSpeed) {
+						velocity.z += speedIncrease * delta;
+					}
 				} else {
 					velocity.z = 0;
+				}
+
+				if (InputHandler.pressed(InputHandler.LEFT)) {
+					if (velocity.x > -moveSpeed) {
+						velocity.x -= speedIncrease * delta;
+					}
+				} else if (InputHandler.pressed(InputHandler.RIGHT)) {
+					if (velocity.x < moveSpeed) {
+						velocity.x += speedIncrease * delta;
+					}
+				} else {
 					velocity.x = 0;
 				}
 
 				controls.getObject().translateX(velocity.x * delta);
-				controls.getObject().translateY(velocity.y * delta);
 				controls.getObject().translateZ(velocity.z * delta);
 
-				raycaster.ray.origin.copy( controls.getObject().position );
-				var intersections = raycaster.intersectObjects( collisions );
-				var isOnObject = intersections.length > 0;
-				console.log((isOnObject) ? true : false);
+				// if (velocity.x < 0 || velocity.x > 0 || velocity.z < 0 || velocity.z > 0) {}
 			}
 
 			function render() {
+				raycaster.ray.direction.set(0,0,1);
+				raycaster.setFromCamera(controls.getObject().position, camera);
+				var intersects = raycaster.intersectObjects(scene.children);
+
+				for (var i = 0; i < intersects.length; i++) {
+					if (intersects.length > 0) {
+						if (intersects[i].distance < 5) {
+							intersects[i].object.material.color.set( 0xff0000 );
+						}
+					}		            
+				}
+
 				renderer.render(scene, camera);
-			}
-
-			function onMouseMove(ev) {
-				mouse[0] = ev.clientX / window.innerWidth;
-				mouse[1] = ev.clientY / window.innerHeight;
-			}
-
-			function onMouseWheel(ev) {
-				var amount = -ev.wheelDeltaY || ev.detail;
-				if ( amount === 0 ) return;
-				var dir = amount / Math.abs(amount);
-				zoomspeed = dir/10;
-
-				// Slow down default zoom speed after user starts zooming, to give them more control
-				minzoomspeed = 0.001;
 			}
 		</script>
 	</body>
