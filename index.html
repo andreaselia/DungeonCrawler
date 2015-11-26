@@ -277,24 +277,34 @@
 				}
 
 				controls.getObject().translateX(velocity.x * delta);
+				controls.getObject().translateY(velocity.y * delta);
 				controls.getObject().translateZ(velocity.z * delta);
 
 				// if (velocity.x < 0 || velocity.x > 0 || velocity.z < 0 || velocity.z > 0) {}
-			}
 
-			function render() {
 				raycaster.ray.direction.set(0,0,1);
 				raycaster.setFromCamera(controls.getObject().position, camera);
 				var intersects = raycaster.intersectObjects(scene.children);
 
 				for (var i = 0; i < intersects.length; i++) {
-					if (intersects.length > 0) {
-						if (intersects[i].distance < 5) {
-							intersects[i].object.material.color.set( 0xff0000 );
-						}
+					if (intersects.length > 0 && intersects[0].distance < 15) {
+						var geometry = new t.Geometry();
+					    geometry.vertices.push(intersects[0].point);
+					    geometry.vertices.push(controls.getObject().position);
+					    scene.remove(rayLine);
+
+					    // draw and add ray line to scene, for visual representation of collisions
+					    var rayLine = new t.Line(geometry, new t.LineBasicMaterial({color: 0xFF00FF, linewidth: 2}));
+					    scene.add(rayLine);
+
+					    // set the intersected objects colour to red
+						intersects[i].object.material.color.set(0xff0000);
+						
 					}		            
 				}
+			}
 
+			function render() {
 				renderer.render(scene, camera);
 			}
 		</script>
