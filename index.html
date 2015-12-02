@@ -105,7 +105,7 @@
 
 			var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 			var ASPECT = WIDTH / HEIGHT;
-			var NEAR = .1, FAR = 1000;
+			var NEAR = 0.1, FAR = 1000;
 			var UNIT = 100, WALLSIZE = 16;
 
 			var t = THREE, stats, loader;
@@ -136,16 +136,17 @@
 
 			var walls = [];
 
-			var rays = [
-				new t.Vector3(0, 0, 1), 
-				new t.Vector3(1, 0, 1), 
-				new t.Vector3(1, 0, 0), 
-				new t.Vector3(1, 0, -1), 
-				new t.Vector3(0, 0, -1), 
-				new t.Vector3(-1, 0, -1), 
-				new t.Vector3(-1, 0, 0), 
-				new t.Vector3(-1, 0, 1)
-			];
+			// var rays = [
+			// 	new t.Vector3(0, 0, 1), 
+			// 	new t.Vector3(1, 0, 1), 
+			// 	new t.Vector3(1, 0, 0), 
+			// 	new t.Vector3(1, 0, -1), 
+			// 	new t.Vector3(0, 0, -1), 
+			// 	new t.Vector3(-1, 0, -1), 
+			// 	new t.Vector3(-1, 0, 0), 
+			// 	new t.Vector3(-1, 0, 1)
+			// ];
+			var mouse = new t.Vector2();
 
 			var raycaster = new t.Raycaster();
 			var camPos = new t.Vector3();
@@ -168,7 +169,7 @@
 				// create a new "Perspective" Camera
 				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
 				// Change the cameras position so it is centered within the map
-				camera.position.y = UNIT * .2;
+				camera.position.y = UNIT * 0.2;
 
 				// Creates a new WebGL Renderer (used to render everything inc. scene)
 				renderer = new t.WebGLRenderer();
@@ -218,12 +219,12 @@
 
 						if (val == 0) {
 							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-							cube.position.set(-20 + (x * 10), UNIT * .2, -30 + (y * 10));
+							cube.position.set(-20 + (x * 10), UNIT * 0.2, -30 + (y * 10));
 							scene.add(cube);
 							// walls.push(cube);
 
 							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-							cube.position.set(-20 + (x * 10), UNIT * .4, -30 + (y * 10));
+							cube.position.set(-20 + (x * 10), UNIT * 0.4, -30 + (y * 10));
 							scene.add(cube);
 							// walls.push(cube);
 						}
@@ -231,7 +232,7 @@
 						if (val == 1) {
 							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
 							// cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide, wireframe: true}));
-							cube.position.set(-20 + (x * 10), UNIT * .3, -30 + (y * 10));
+							cube.position.set(-20 + (x * 10), UNIT * 0.3, -30 + (y * 10));
 							scene.add(cube);
 							walls.push(cube);
 						}
@@ -282,8 +283,7 @@
 
 				// if (velocity.x < 0 || velocity.x > 0 || velocity.z < 0 || velocity.z > 0) {}
 
-				raycaster.ray.direction.set(0,0,1);
-				raycaster.setFromCamera(controls.getObject().position, camera);
+				raycaster.setFromCamera(camera.position, camera);
 				var intersects = raycaster.intersectObjects(scene.children);
 
 				for (var i = 0; i < intersects.length; i++) {
@@ -293,11 +293,9 @@
 					    geometry.vertices.push(controls.getObject().position);
 					    scene.remove(rayLine);
 
-					    // draw and add ray line to scene, for visual representation of collisions
 					    var rayLine = new t.Line(geometry, new t.LineBasicMaterial({color: 0xFF00FF, linewidth: 2}));
 					    scene.add(rayLine);
 
-					    // set the intersected objects colour to red
 						intersects[i].object.material.color.set(0xff0000);
 						
 					}		            
