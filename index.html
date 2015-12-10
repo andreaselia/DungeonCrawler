@@ -175,7 +175,6 @@
 			}
 
 			function setupScene() {
-				// scene.add(mouseControls.getObject());
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
 				var geometry = new t.CubeGeometry(10, 10, 10);
 
@@ -196,26 +195,27 @@
 				for (var y = 0; y < map.length; y++) {
 					for (var x = 0; x < map[0].length; x++) {
 						var val = map[y][x];
-						var cube;
 
-						if (val == 0) {
-							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-							cube.position.set(-20 + (x * 10), UNIT * 0.2, -30 + (y * 10));
-							scene.add(cube);
-							// walls.push(cube);
+						switch(map[x][y]) {
+							case 0:
+								// Floor
+								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
+								cube.position.set(-20 + (x * 10), UNIT * 0.2, -30 + (y * 10));
+								scene.add(cube);
 
-							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-							cube.position.set(-20 + (x * 10), UNIT * 0.4, -30 + (y * 10));
-							scene.add(cube);
-							// walls.push(cube);
-						}
+								// Ceiling
+								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
+								cube.position.set(-20 + (x * 10), UNIT * 0.4, -30 + (y * 10));
+								scene.add(cube);
+								break;
 
-						if (val == 1) {
-							cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
-							// cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide, wireframe: true}));
-							cube.position.set(-20 + (x * 10), UNIT * 0.3, -30 + (y * 10));
-							scene.add(cube);
-							walls.push(cube);
+							case 1:
+								// Walls
+								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
+								cube.position.set(-20 + (x * 10), UNIT * 0.3, -30 + (y * 10));
+								scene.add(cube);
+								walls.push(cube);
+								break;
 						}
 					}
 				}
@@ -228,6 +228,7 @@
 				render();
 
 				stats.end();
+
 				requestAnimationFrame(animate);
 			}
 
@@ -264,8 +265,10 @@
 
 				for (var j = 0; j < rays.length; j++) {
 					raycaster.setFromCamera(rays[j], camera);
+
 					var intersects = raycaster.intersectObjects(scene.children);
 					var rayLine;
+
 					for (var i = 0; i < intersects.length; i++) {
 						if (intersects.length > 0 && intersects[i].distance < 3) {
 							if ((i === 0 || i === 1 || i === 7)) {
