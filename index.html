@@ -43,12 +43,12 @@
 		<script src="js/pointerlockcontrols.js"></script>
 		<script src="js/keyboard.js"></script>
 
-		<!--<div id="blocker">
+<!-- 		<div id="blocker">
 			<div id="instructions">
 				Left Mouse to Start<br>
 				(SPACE = Action, WASD = Move, MOUSE = Look around)
 			</div>
-		</div>-->
+		</div> -->
 
 		<script>
 			var moveForward = true,
@@ -61,7 +61,7 @@
 			var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 			var ASPECT = WIDTH / HEIGHT;
 			var NEAR = 0.1, FAR = 1000;
-			var UNIT = 100, WALLSIZE = 16;
+			var UNITSIZE = 100, WALLSIZE = 16;
 
 			var t = THREE, stats, loader;
 			var scene, camera, renderer, clock, controls, key;
@@ -106,8 +106,6 @@
 			var velocity = new t.Vector3();
 			var moveSpeed = 20, speedIncrease = 100;
 
-			var walls = [];
-
 			var rays = [
 				new t.Vector3(0, 0, 1), 
 				new t.Vector3(1, 0, 1), 
@@ -133,6 +131,12 @@
 			init();
 			animate();
 
+			/*test
+			var renderTest = document.createElement("canvas");
+			renderTest.id = "renderTest";
+			document.body.appendChild(renderTest);
+			*/
+
 			function init() {
 				// CTRL+U = source, F12 = dev tools
 				stats = new Stats();
@@ -148,7 +152,7 @@
 				// create a new "Perspective" Camera
 				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
 				// Change the cameras position so it is centered within the map
-				camera.position.y = UNIT * 0.2;
+				camera.position.y = UNITSIZE * 0.2;
 
 				// Creates a new WebGL Renderer (used to render everything inc. scene)
 				renderer = new t.WebGLRenderer();
@@ -199,22 +203,21 @@
 						switch(map[x][y]) {
 							case 0:
 								// Floor
-								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-								cube.position.set(-20 + (x * 10), UNIT * 0.2, -30 + (y * 10));
-								scene.add(cube);
+								var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
+								floor.position.set(-20 + (x * 10), UNITSIZE * 0.2, -30 + (y * 10));
+								scene.add(floor);
 
 								// Ceiling
-								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-								cube.position.set(-20 + (x * 10), UNIT * 0.4, -30 + (y * 10));
-								scene.add(cube);
+								var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
+								ceiling.position.set(-20 + (x * 10), UNITSIZE * 0.4, -30 + (y * 10));
+								scene.add(ceiling);
 								break;
 
 							case 1:
 								// Walls
-								var cube = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
-								cube.position.set(-20 + (x * 10), UNIT * 0.3, -30 + (y * 10));
-								scene.add(cube);
-								walls.push(cube);
+								var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
+								wall.position.set(-20 + (x * 10), UNITSIZE * 0.3, -30 + (y * 10));
+								scene.add(wall);
 								break;
 						}
 					}
@@ -260,47 +263,47 @@
 				}
 
 				controls.getObject().translateX(velocity.x * delta);
-				controls.getObject().translateY(velocity.y * delta);
 				controls.getObject().translateZ(velocity.z * delta);
+
+				var distance = 5, rayLine, collisions;
 
 				for (var j = 0; j < rays.length; j++) {
 					raycaster.setFromCamera(rays[j], camera);
 
-					var intersects = raycaster.intersectObjects(scene.children);
-					var rayLine;
+					collisions = raycaster.intersectObjects(scene.children);
 
-					for (var i = 0; i < intersects.length; i++) {
-						if (intersects.length > 0 && intersects[i].distance < 3) {
-							if ((j === 0 || j === 1 || j === 7)) {
-								canMove.FORWARD = false;
-							} else if ((j === 3 || j === 4 || j === 5)) {
-								canMove.BACKWARD = false;
-							} else {
-								canMove.FORWARD = true;
-								canMove.BACKWARD = true;
-							}
+					if (collisions.length > 0) {
+						if ((j === 0 || j === 1 || j === 7)) {
+							canMove.FORWARD = false;
+						} else if ((j === 3 || j === 4 || j === 5)) {
+							canMove.BACKWARD = false;
+						} else {
+							canMove.FORWARD = true;
+							canMove.BACKWARD = true;
+						}
 
-							if ((j === 1 || j === 2 || j === 3)) {
-								canMove.LEFT = false;
-							} else if ((j === 5 || j === 6 || j === 7)) {
-								canMove.RIGHT = false;
-							} else {
-								canMove.LEFT = true;
-								canMove.RIGHT = true;
-							}
+						if ((j === 1 || j === 2 || j === 3)) {
+							canMove.LEFT = false;
+						} else if ((j === 5 || j === 6 || j === 7)) {
+							canMove.RIGHT = false;
+						} else {
+							canMove.LEFT = true;
+							canMove.RIGHT = true;
+						}
 
-							var geometry = new t.Geometry();
-						    geometry.vertices.push(intersects[i].point);
-						    geometry.vertices.push(controls.getObject().position);
-						    scene.remove(rayLine);
+						var geometry = new t.Geometry();
+					    geometry.vertices.push(collisions[0].point);
+					    geometry.vertices.push(controls.getObject().position);
+					    scene.remove(rayLine);
 
-						    rayLine = new t.Line(geometry, new t.LineBasicMaterial({color: 0xFF00FF, linewidth: 2}));
-						    scene.add(rayLine);
+					    rayLine = new t.Line(geometry, new t.LineBasicMaterial({color: 0xFF00FF, linewidth: 2}));
+					    scene.add(rayLine);
 
-							intersects[i].object.material.color.set(0xff0000);
-						}           
+						collisions[0].object.material.color.set(0xff0000);
 					}
 				}
+
+				console.log(canMove);
 			}
 
 			function render() {
