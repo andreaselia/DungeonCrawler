@@ -272,7 +272,7 @@
 
 					collisions = raycaster.intersectObjects(scene.children);
 
-					if (collisions.length > 0) {
+					if (collisions.length > 0 && collisions[0].distance < 5) {
 						if ((j === 0 || j === 1 || j === 7)) {
 							canMove.FORWARD = false;
 						} else if ((j === 3 || j === 4 || j === 5)) {
