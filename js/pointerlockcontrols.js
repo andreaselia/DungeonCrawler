@@ -39,7 +39,7 @@ THREE.PointerLockControls = function ( camera ) {
 
 	this.enabled = false;
 
-	this.getObject = function () {
+	this.getObject = function() {
 
 		return yawObject;
 

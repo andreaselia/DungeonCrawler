@@ -60,7 +60,7 @@
 
 			var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
 			var ASPECT = WIDTH / HEIGHT;
-			var NEAR = 0.1, FAR = 1000;
+			var NEAR = 1, FAR = 1000;
 			var UNITSIZE = 100, WALLSIZE = 16;
 
 			var t = THREE, stats, loader;
@@ -103,6 +103,8 @@
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 			];
 
+			var objects = [];
+
 			var velocity = new t.Vector3();
 			var moveSpeed = 20, speedIncrease = 100;
 
@@ -116,10 +118,8 @@
 				new t.Vector3(-1, 0, 0), 
 				new t.Vector3(-1, 0, 1)
 			];
-			var mouse = new t.Vector2();
 
-			var raycaster = new t.Raycaster();
-			var camPos = new t.Vector3();
+			var mouse = new t.Vector2();
 
 			var canMove = {
 				FORWARD: true,
@@ -127,6 +127,8 @@
 				LEFT: true,
 				RIGHT: true,
 			};
+
+			var raycaster;
 
 			init();
 			animate();
@@ -166,7 +168,11 @@
 				// Add the controls object to the scene
 				scene.add(controls.getObject());
 
+				// Adds the keyboard class that handles keyboard input
 				key = new Keyboard();
+
+				// Raycaster for collisions
+				raycaster = new t.Raycaster();
 
 				// Initialize the Clock so we can keep track of delta time etc
 				clock = new t.Clock();
@@ -179,8 +185,10 @@
 			}
 
 			function setupScene() {
+				var cubeW = 10, cubeH = 10;
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
-				var geometry = new t.CubeGeometry(10, 10, 10);
+				// PlaneGeometry?
+				var geometry = new t.CubeGeometry(cubeW, 10, cubeW);
 
 				// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
 				var textures = [
@@ -204,20 +212,21 @@
 							case 0:
 								// Floor
 								var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-								floor.position.set(-20 + (x * 10), UNITSIZE * 0.2, -30 + (y * 10));
+								floor.position.set(-20 + (x * cubeW), UNITSIZE * 0.2, -30 + (y * cubeW));
 								scene.add(floor);
 
 								// Ceiling
 								var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-								ceiling.position.set(-20 + (x * 10), UNITSIZE * 0.4, -30 + (y * 10));
+								ceiling.position.set(-20 + (x * cubeW), UNITSIZE * 0.4, -30 + (y * cubeW));
 								scene.add(ceiling);
 								break;
 
 							case 1:
 								// Walls
 								var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
-								wall.position.set(-20 + (x * 10), UNITSIZE * 0.3, -30 + (y * 10));
+								wall.position.set(-20 + (x * cubeW), UNITSIZE * 0.3, -30 + (y * cubeW));
 								scene.add(wall);
+								objects.push(wall);
 								break;
 						}
 					}
@@ -238,11 +247,11 @@
 			function update() {
 				var delta = clock.getDelta();
 
-				if (key.down(key.FORWARD) && canMove.FORWARD) {
+				if (key.down(key.FORWARD) && !collides(new t.Vector3(0, 0, -1), 5)) {
 					if (velocity.z > -moveSpeed) {
 						velocity.z -= speedIncrease * delta;
 					}
-				} else if (key.down(key.BACKWARD) && canMove.BACKWARD) {
+				} else if (key.down(key.BACKWARD) && !collides(new t.Vector3(0, 0, 1), 5)) {
 					if (velocity.z < moveSpeed) {
 						velocity.z += speedIncrease * delta;
 					}
@@ -250,11 +259,11 @@
 					velocity.z = 0;
 				}
 
-				if (key.down(key.LEFT) && canMove.LEFT) {
+				if (key.down(key.LEFT) && !collides(new t.Vector3(-1, 0, 0), 5)) {
 					if (velocity.x > -moveSpeed) {
 						velocity.x -= speedIncrease * delta;
 					}
-				} else if (key.down(key.RIGHT) && canMove.RIGHT) {
+				} else if (key.down(key.RIGHT) && !collides(new t.Vector3(1, 0, 0), 5)) {
 					if (velocity.x < moveSpeed) {
 						velocity.x += speedIncrease * delta;
 					}
@@ -262,48 +271,15 @@
 					velocity.x = 0;
 				}
 
-				controls.getObject().translateX(velocity.x * delta);
-				controls.getObject().translateZ(velocity.z * delta);
+				controls.getObject().translateX( velocity.x * delta );
+				controls.getObject().translateY( velocity.y * delta );
+				controls.getObject().translateZ( velocity.z * delta );
+			}
 
-				var distance = 5, rayLine, collisions;
-
-				for (var j = 0; j < rays.length; j++) {
-					raycaster.setFromCamera(rays[j], camera);
-
-					collisions = raycaster.intersectObjects(scene.children);
-
-					if (collisions.length > 0 && collisions[0].distance < 5) {
-						if ((j === 0 || j === 1 || j === 7)) {
-							canMove.FORWARD = false;
-						} else if ((j === 3 || j === 4 || j === 5)) {
-							canMove.BACKWARD = false;
-						} else {
-							canMove.FORWARD = true;
-							canMove.BACKWARD = true;
-						}
-
-						if ((j === 1 || j === 2 || j === 3)) {
-							canMove.LEFT = false;
-						} else if ((j === 5 || j === 6 || j === 7)) {
-							canMove.RIGHT = false;
-						} else {
-							canMove.LEFT = true;
-							canMove.RIGHT = true;
-						}
-
-						var geometry = new t.Geometry();
-					    geometry.vertices.push(collisions[0].point);
-					    geometry.vertices.push(controls.getObject().position);
-					    scene.remove(rayLine);
-
-					    rayLine = new t.Line(geometry, new t.LineBasicMaterial({color: 0xFF00FF, linewidth: 2}));
-					    scene.add(rayLine);
-
-						collisions[0].object.material.color.set(0xff0000);
-					}
-				}
-
-				console.log(canMove);
+			function collides(vec, dist) {
+				raycaster.setFromCamera(vec, camera);
+				var intersects = raycaster.intersectObjects(objects);
+				return (intersects.length > 0 && intersects[0].distance < dist) ? true : false;
 			}
 
 			function render() {
