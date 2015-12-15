@@ -3,9 +3,9 @@
  * @author Andreas Elia / http://github.com/andreaselia/
  */
 
-var Keyboard = function () {
+var Keyboard = function ( hand ) {
 
-	this.leftHand = false;
+	this.leftHand = hand;
 
 	this.movementSpeed = 1.0;
 	this.autoForward = false;
@@ -20,6 +20,9 @@ var Keyboard = function () {
 
 	// SPACE = Continue
 	this.SPACE = 32;
+
+	// ONE = Switch WASD/Arrow Keys
+	this.ONE = 49;
 
 	// ESC = Pause
 	this.PAUSE = 27;

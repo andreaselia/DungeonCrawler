@@ -33,6 +33,17 @@
 				color: #FFFFFF;
 				text-align: center;
 				cursor: pointer;
+				font-size: 24px;
+				padding-top: 50px;
+			}
+
+			#radar {
+				background-color: rgba(255, 255, 255, .3);
+				border: 1px solid #ffffff;
+				bottom: 10px;
+				left: 10px;
+				position: absolute;
+				z-index: 100;
 			}
 		</style>
 	</head>
@@ -43,12 +54,16 @@
 		<script src="js/pointerlockcontrols.js"></script>
 		<script src="js/keyboard.js"></script>
 
-<!-- 		<div id="blocker">
+		<div id="blocker">
 			<div id="instructions">
-				Left Mouse to Start<br>
-				(SPACE = Action, WASD = Move, MOUSE = Look around)
+				Dungeon Crawler<br><br>
+				Left Mouse to Start<br><br>
+				SPACE = Action<br>
+				WASD/Arrow Keys = Move<br>
+				MOUSE = Look around<br>
+				1 = Toggle WASD/Arrow Keys<br>
 			</div>
-		</div> -->
+		</div>
 
 		<script>
 			var element = document.body;
@@ -61,21 +76,26 @@
 			var t = THREE, stats, loader;
 			var scene, camera, renderer, clock, controls, key;
 
-			var MAINMENU = 0,
-				INSTRUCTIONS = 1,
-				CREDITS = 2,
-				INGAME = 3,
-				PAUSED = 4;
-			var GAMESTATE = 0;
+			var blocker = document.getElementById('blocker');
 
 			var pointerlockchange = function (event) {
 				if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
 					controlsEnabled = true;
 					controls.enabled = true;
+					blocker.style.display = 'none';
 				} else {
 					controls.enabled = false;
+					blocker.style.display = "box";
 				}
 			};
+
+			document.addEventListener('pointerlockchange', pointerlockchange, false);
+			document.addEventListener('mozpointerlockchange', pointerlockchange, false);
+			document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
+			document.addEventListener('click', function (event) {
+				element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+				element.requestPointerLock();
+			}, false);
 
 			var map = [
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
@@ -90,6 +110,7 @@
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 			];
 
+			// Objects that can be collided with
 			var objects = [];
 
 			var velocity = new t.Vector3();
@@ -124,7 +145,7 @@
 				document.body.appendChild(renderer.domElement);
 
 				// Adds the keyboard class that handles keyboard input
-				key = new Keyboard();
+				key = new Keyboard(false);
 
 				// Raycaster for collisions
 				raycaster = new t.Raycaster();
@@ -137,6 +158,8 @@
 
 				// Creates a new scene object
 				scene = new t.Scene();
+				// Adds fog to the scene
+				scene.fog = new t.FogExp2(0x4a5635, 0.025);
 
 				// create a new "Perspective" Camera
 				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
@@ -152,17 +175,6 @@
 			}
 
 			function setupGame() {
-				document.addEventListener('pointerlockchange', pointerlockchange, false);
-				document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-				document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-				document.addEventListener('click', function (event) {
-					element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-					element.requestPointerLock();
-				}, false);
-
-				// Adds fog to the scene
-				scene.fog = new t.FogExp2(0x4a5635, 0.025);
-
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
 				// PlaneGeometry?
 				var geometry = new t.CubeGeometry(10, 10, 10);
@@ -183,8 +195,6 @@
 
 				for (var y = 0; y < map.length; y++) {
 					for (var x = 0; x < map[0].length; x++) {
-						var val = map[y][x];
-
 						switch(map[x][y]) {
 							case 0:
 								// Floor
@@ -208,6 +218,12 @@
 						}
 					}
 				}
+
+				var radar = document.createElement("canvas");
+				radar.id = "radar";
+				radar.width = 302;
+				radar.height = 152;
+				document.body.appendChild(radar);
 			}
 
 			function animate() {
@@ -221,10 +237,37 @@
 				requestAnimationFrame(animate);
 			}
 
+			var testCount = 0;
+
 			function update() {
 				var delta = clock.getDelta();
 
-				// if (controls.getMouse() != undefined) console.log("mouse position: " + controls.getMouse().x);
+				testCount++;
+
+				if (testCount == 10) {
+					testCount = 0;
+
+					drawRadar();
+				}
+
+				// console.log(testCount);
+				console.log(controls.getObject().position.x);
+
+				// if (controls.getMouse() != undefined) {
+				// 	console.log("mouse position: " + controls.getMouse().x);
+				// }
+
+				// will eventually work as pause
+				if (key.down(key.ESC)) {
+					document.pointerLockElement = null;
+					controls.enabled = false;
+					blocker.style.display = "box";
+					key.reset(key.ESC);
+				}
+
+				if (key.down(key.ONE)) {
+					key = new Keyboard(!key.leftHand);
+				}
 
 				if (key.down(key.FORWARD) && !collides(new t.Vector3(0, 0, -1), 5)) {
 					if (velocity.z > -moveSpeed) {
@@ -253,6 +296,27 @@
 				controls.getObject().translateX( velocity.x * delta );
 				controls.getObject().translateY( velocity.y * delta );
 				controls.getObject().translateZ( velocity.z * delta );
+			}
+
+			function drawRadar() {
+				var ctx = document.getElementById('radar').getContext('2d');
+
+				ctx.clearRect(0, 0, WIDTH, HEIGHT);
+
+				for (var y = 0; y < map.length; y++) {
+					for (var x = 0; x < map[0].length; x++) {
+						switch(map[x][y]) {
+							case 1:
+								// Walls
+								ctx.fillStyle = '#0000FF';
+								ctx.fillRect((x * 5), (y * 5), 4, 4);
+								break;
+						}
+					}
+				}
+
+				ctx.fillStyle = '#ff0000';
+				ctx.fillRect(15 + (controls.getObject().position.x * 5) / map.length - 5, 15 + (controls.getObject().position.z * 5) / map.length, 4, 4);
 			}
 
 			function collides(vec, dist) {
