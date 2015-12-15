@@ -18,11 +18,18 @@ var Keyboard = function () {
 	this.LEFT = (this.leftHand ? 37 : 65);
 	this.RIGHT = (this.leftHand ? 39 : 68);
 
+	// SPACE = Continue
+	this.SPACE = 32;
+
 	// ESC = Pause
 	this.PAUSE = 27;
 
 	this.down = function( keyCode ) {
 		return this.pressed[keyCode];
+	};
+
+	this.reset = function( keyCode ) {
+		delete this.pressed[keyCode];
 	};
 
 	this.onKeyDown = function( event ) {

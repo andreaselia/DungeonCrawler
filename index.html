@@ -51,11 +51,6 @@
 		</div> -->
 
 		<script>
-			var moveForward = true,
-				moveBackward = false,
-				moveLeft = false,
-				moveRight = false;
-
 			var element = document.body;
 
 			var WIDTH = window.innerWidth, HEIGHT = window.innerHeight;
@@ -73,7 +68,7 @@
 				PAUSED = 4;
 			var GAMESTATE = 0;
 
-			var pointerlockchange = function (e) {
+			var pointerlockchange = function (event) {
 				if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
 					controlsEnabled = true;
 					controls.enabled = true;
@@ -81,14 +76,6 @@
 					controls.enabled = false;
 				}
 			};
-
-			document.addEventListener('pointerlockchange', pointerlockchange, false);
-			document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-			document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-			document.addEventListener('click', function (e) {
-				element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-				element.requestPointerLock();
-			}, false);
 
 			var map = [
 				[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
@@ -106,18 +93,8 @@
 			var objects = [];
 
 			var velocity = new t.Vector3();
-			var moveSpeed = 20, speedIncrease = 100;
-
-			var rays = [
-				new t.Vector3(0, 0, 1), 
-				new t.Vector3(1, 0, 1), 
-				new t.Vector3(1, 0, 0), 
-				new t.Vector3(1, 0, -1), 
-				new t.Vector3(0, 0, -1), 
-				new t.Vector3(-1, 0, -1), 
-				new t.Vector3(-1, 0, 0), 
-				new t.Vector3(-1, 0, 1)
-			];
+			var moveSpeed = 20;
+			var speedIncrease = 100;
 
 			var mouse = new t.Vector2();
 
@@ -133,28 +110,11 @@
 			init();
 			animate();
 
-			/*test
-			var renderTest = document.createElement("canvas");
-			renderTest.id = "renderTest";
-			document.body.appendChild(renderTest);
-			*/
-
 			function init() {
 				// CTRL+U = source, F12 = dev tools
 				stats = new Stats();
 				stats.setMode(0);
-
 				document.body.appendChild(stats.domElement);
-
-				// Creates a new scene object
-				scene = new t.Scene();
-				// Adds fog to the scene
-				scene.fog = new t.FogExp2(0x4a5635, 0.025);
-				
-				// create a new "Perspective" Camera
-				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
-				// Change the cameras position so it is centered within the map
-				camera.position.y = UNITSIZE * 0.2;
 
 				// Creates a new WebGL Renderer (used to render everything inc. scene)
 				renderer = new t.WebGLRenderer();
@@ -163,32 +123,49 @@
 				// Add the renderers DOM element to the window
 				document.body.appendChild(renderer.domElement);
 
-				// Create a new init of the controls and pass in the camera as the object
-				controls = new t.PointerLockControls(camera);
-				// Add the controls object to the scene
-				scene.add(controls.getObject());
-
 				// Adds the keyboard class that handles keyboard input
 				key = new Keyboard();
 
 				// Raycaster for collisions
 				raycaster = new t.Raycaster();
 
-				// Initialize the Clock so we can keep track of delta time etc
-				clock = new t.Clock();
-
 				// The texture loader allows textures to be loaded and kept track of
 				loader = new t.TextureLoader();
 
-				// Call a function to setup the scene
-				setupScene();
+				// Initialize the Clock so we can keep track of delta time etc
+				clock = new t.Clock();
+
+				// Creates a new scene object
+				scene = new t.Scene();
+
+				// create a new "Perspective" Camera
+				camera = new t.PerspectiveCamera(75, ASPECT, NEAR, FAR);
+				// Change the cameras position so it is centered within the map
+				camera.position.y = UNITSIZE * 0.2;
+
+				// Create a new init of the controls and pass in the camera as the object
+				controls = new t.PointerLockControls(camera);
+				// Add the controls object to the scene
+				scene.add(controls.getObject());
+
+				setupGame();
 			}
 
-			function setupScene() {
-				var cubeW = 10, cubeH = 10;
+			function setupGame() {
+				document.addEventListener('pointerlockchange', pointerlockchange, false);
+				document.addEventListener('mozpointerlockchange', pointerlockchange, false);
+				document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
+				document.addEventListener('click', function (event) {
+					element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+					element.requestPointerLock();
+				}, false);
+
+				// Adds fog to the scene
+				scene.fog = new t.FogExp2(0x4a5635, 0.025);
+
 				// Since the walls, floor and ceiling are made of boxes we create a box geometry for them
 				// PlaneGeometry?
-				var geometry = new t.CubeGeometry(cubeW, 10, cubeW);
+				var geometry = new t.CubeGeometry(10, 10, 10);
 
 				// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
 				var textures = [
@@ -212,19 +189,19 @@
 							case 0:
 								// Floor
 								var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
-								floor.position.set(-20 + (x * cubeW), UNITSIZE * 0.2, -30 + (y * cubeW));
+								floor.position.set(-20 + (x * 10), UNITSIZE * 0.2, -30 + (y * 10));
 								scene.add(floor);
 
 								// Ceiling
 								var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
-								ceiling.position.set(-20 + (x * cubeW), UNITSIZE * 0.4, -30 + (y * cubeW));
+								ceiling.position.set(-20 + (x * 10), UNITSIZE * 0.4, -30 + (y * 10));
 								scene.add(ceiling);
 								break;
 
 							case 1:
 								// Walls
 								var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
-								wall.position.set(-20 + (x * cubeW), UNITSIZE * 0.3, -30 + (y * cubeW));
+								wall.position.set(-20 + (x * 10), UNITSIZE * 0.3, -30 + (y * 10));
 								scene.add(wall);
 								objects.push(wall);
 								break;
@@ -246,6 +223,8 @@
 
 			function update() {
 				var delta = clock.getDelta();
+
+				// if (controls.getMouse() != undefined) console.log("mouse position: " + controls.getMouse().x);
 
 				if (key.down(key.FORWARD) && !collides(new t.Vector3(0, 0, -1), 5)) {
 					if (velocity.z > -moveSpeed) {
