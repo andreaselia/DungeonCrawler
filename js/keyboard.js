@@ -13,10 +13,10 @@ var Keyboard = function ( hand ) {
 	this.pressed = {};
 
 	// WASD/Arrow Key = Movement
-	this.FORWARD = (this.leftHand ? 38 : 87);
-	this.BACKWARD = (this.leftHand ? 40 : 83);
-	this.LEFT = (this.leftHand ? 37 : 65);
-	this.RIGHT = (this.leftHand ? 39 : 68);
+	this.FORWARD = ( this.leftHand ? 38 : 87 );
+	this.BACKWARD = ( this.leftHand ? 40 : 83 );
+	this.LEFT = ( this.leftHand ? 37 : 65 );
+	this.RIGHT = ( this.leftHand ? 39 : 68 );
 
 	// SPACE = Continue
 	this.SPACE = 32;
@@ -28,23 +28,22 @@ var Keyboard = function ( hand ) {
 	this.PAUSE = 27;
 
 	this.down = function( keyCode ) {
-		return this.pressed[keyCode];
+		return this.pressed[ keyCode ];
 	};
 
 	this.reset = function( keyCode ) {
-		delete this.pressed[keyCode];
+		delete this.pressed[ keyCode ];
 	};
 
 	this.onKeyDown = function( event ) {
-		this.pressed[event.keyCode] = true;
+		this.pressed[ event.keyCode ] = true;
 	};
 
 	this.onKeyUp = function( event ) {
-		delete this.pressed[event.keyCode];
+		delete this.pressed[ event.keyCode ];
 	};
 
 	document.addEventListener( 'contextmenu', function ( event ) { event.preventDefault(); }, false );
-
 	document.addEventListener( 'keydown', bind( this, this.onKeyDown ), false );
 	document.addEventListener( 'keyup', bind( this, this.onKeyUp ), false );
 
