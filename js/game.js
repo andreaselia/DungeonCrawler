@@ -8,27 +8,6 @@ var UNITSIZE = 50, WALLSIZE = 16;
 var t = THREE, stats, loader;
 var scene, camera, renderer, clock, controls, key;
 
-var blocker = document.getElementById( 'blocker' );
-
-var pointerlockchange = function (event) {
-	if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
-		controlsEnabled = true;
-		controls.enabled = true;
-		blocker.style.display = 'none';
-	} else {
-		controls.enabled = false;
-		blocker.style.display = "box";
-	}
-};
-
-document.addEventListener( 'pointerlockchange', pointerlockchange, false );
-document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
-document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
-document.addEventListener( 'click', function ( event ) {
-	element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-	element.requestPointerLock();
-}, false );
-
 var map = [
 	[1, 1, 1, 1, 1, 1, 1, 1, 1, 1], 
 	[1, 0, 0, 0, 0, 0, 0, 0, 0, 1], 
@@ -56,27 +35,44 @@ var data = [
 	[0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
 
+var showGUI = false;
+
 // Objects that can be collided with
 var objects = [];
 
-var velocity = new t.Vector3();
+var position = new t.Vector3();
 var moveSpeed = 20;
 var speedIncrease = 100;
 
 var mouse = new t.Vector2();
 
-var canMove = {
-	FORWARD: true,
-	BACKWARD: true,
-	LEFT: true,
-	RIGHT: true,
-};
-
 var raycaster;
 
-var testCount = 0;
+var radarDrawCount = 0;
 
 var player;
+
+var blocker = document.getElementById( 'blocker' );
+
+var pointerlockchange = function ( event ) {
+	if ( document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element ) {
+		controlsEnabled = true;
+		controls.enabled = true;
+		blocker.style.display = 'none';
+	} else {
+		controls.enabled = false;
+		blocker.style.display = "box";
+	}
+};
+
+document.addEventListener( 'pointerlockchange', pointerlockchange, false );
+document.addEventListener( 'mozpointerlockchange', pointerlockchange, false );
+document.addEventListener( 'webkitpointerlockchange', pointerlockchange, false );
+document.addEventListener( 'click', function ( event ) {
+	element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+	element.requestPointerLock()
+	showGUI = true;
+}, false );
 
 function init() {
 	// CTRL+U = source, F12 = dev tools
@@ -179,16 +175,10 @@ function setupGame() {
 function update() {
 	var delta = clock.getDelta();
 
-	testCount++;
+	player.update();
 
-	if (testCount == 10) {
-		testCount = 0;
-
-		drawRadar();
-	}
-
-	// console.log(testCount);
-	console.log(controls.getObject().position.x);
+	// console.log(radarDrawCount);
+	// console.log(controls.getObject().position.x);
 
 	// if (controls.getMouse() != undefined) {
 	// 	console.log("mouse position: " + controls.getMouse().x);
@@ -207,38 +197,40 @@ function update() {
 	}
 
 	if (key.down(key.FORWARD) && !collides(new t.Vector3(0, 0, -1), 2)) {
-		if (velocity.z > -moveSpeed) {
-			velocity.z -= speedIncrease * delta;
+		if (position.z > -moveSpeed) {
+			position.z -= speedIncrease * delta;
 		}
 	} else if (key.down(key.BACKWARD) && !collides(new t.Vector3(0, 0, 1), 2)) {
-		if (velocity.z < moveSpeed) {
-			velocity.z += speedIncrease * delta;
+		if (position.z < moveSpeed) {
+			position.z += speedIncrease * delta;
 		}
 	} else {
-		velocity.z = 0;
+		position.z = 0;
 	}
 
 	if (key.down(key.LEFT) && !collides(new t.Vector3(-1, 0, 0), 2)) {
-		if (velocity.x > -moveSpeed) {
-			velocity.x -= speedIncrease * delta;
+		if (position.x > -moveSpeed) {
+			position.x -= speedIncrease * delta;
 		}
 	} else if (key.down(key.RIGHT) && !collides(new t.Vector3(1, 0, 0), 2)) {
-		if (velocity.x < moveSpeed) {
-			velocity.x += speedIncrease * delta;
+		if (position.x < moveSpeed) {
+			position.x += speedIncrease * delta;
 		}
 	} else {
-		velocity.x = 0;
+		position.x = 0;
 	}
 
-	controls.getObject().translateX( velocity.x * delta );
-	controls.getObject().translateY( velocity.y * delta );
-	controls.getObject().translateZ( velocity.z * delta );
+	controls.getObject().translateX( position.x * delta );
+	controls.getObject().translateY( position.y * delta );
+	controls.getObject().translateZ( position.z * delta );
 
-	console.log('cam: ' + camera.position.z);
+	// console.log('cam: ' + camera.position.z);
 }
 
 function drawRadar() {
 	var ctx = document.getElementById('radar').getContext('2d');
+
+	document.getElementById('radar').style.visibility = 'visible';
 
 	ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -266,14 +258,22 @@ function collides(vec, dist) {
 
 function render() {
 	renderer.render(scene, camera);
+	player.render(scene, camera);
+
+	if (showGUI) {
+		radarDrawCount++;
+
+		if (radarDrawCount == 10) {
+			radarDrawCount = 0;
+			drawRadar();
+		}
+	}
 }
 
 function animate() {
 	stats.begin();
-
 	update();
 	render();
-
 	stats.end();
 
 	requestAnimationFrame(animate);

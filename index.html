@@ -1,8 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 	<head>
-		<title>Dungeon Crawler</title>
 		<meta charset="utf-8">
+
+		<title>Dungeon Crawler</title>
+
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+
+		<link rel="stylesheet" href="css/normalize.css">
+		<link rel="stylesheet" href="css/skeleton.css">
 
 		<style>
 			body {
@@ -21,20 +27,10 @@
 			}
 
 			#blocker {
-				background-color: rgba(0, 0, 0, .5);
+				background-color: #b5d6fa;
 				width: 100%;
 				height: 100%;
 				position: absolute;
-			}
-
-			#instructions {
-				width: 100%;
-				height: 100%;
-				color: #FFFFFF;
-				text-align: center;
-				cursor: pointer;
-				font-size: 24px;
-				padding-top: 50px;
 			}
 
 			#radar {
@@ -44,19 +40,39 @@
 				left: 10px;
 				position: absolute;
 				z-index: 100;
+				visibility: hidden;
+			}
+
+			#padding-logo {
+				margin-top: 19%;
+			}
+
+			#padding-help {
+				margin-top: 26%;
 			}
 		</style>
 	</head>
 	<body>
 
 		<div id="blocker">
-			<div id="instructions">
-				Dungeon Crawler<br><br>
-				Left Mouse to Start<br><br>
-				SPACE = Action<br>
-				WASD/Arrow Keys = Move<br>
-				MOUSE = Look around<br>
-				1 = Toggle WASD/Arrow Keys<br>
+			<div class="container">
+				<div class="row" id="padding-logo">
+					<div class="twelve columns" align="center">
+						<img src="textures/logo.png" alt="Logo">
+					</div>
+				</div>
+
+				<div class="row" id="padding-help">
+					<div class="three columns" align="center">
+						<img src="textures/help-keys.png" alt="Keys">
+					</div>
+					<div class="six columns" align="center">
+						<img src="textures/help-action.png" alt="Action">
+					</div>
+					<div class="three columns" align="center">
+						<img src="textures/help-mouse.png" alt="Mouse">
+					</div>
+				</div>
 			</div>
 		</div>
 
