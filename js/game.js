@@ -61,7 +61,7 @@ var pointerlockchange = function ( event ) {
 		blocker.style.display = 'none';
 	} else {
 		controls.enabled = false;
-		blocker.style.display = "box";
+		blocker.style.display = 'box';
 	}
 };
 
@@ -127,10 +127,10 @@ function setupGame() {
 
 	// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
 	var textures = [
-		loader.load('textures/floor0.png'),
-		loader.load('textures/wall0.png'),
-		loader.load('textures/wall1.png'),
-		loader.load('textures/ceiling0.png')
+		loader.load( 'textures/floor0.png' ),
+		loader.load( 'textures/wall0.png' ),
+		loader.load( 'textures/wall1.png' ),
+		loader.load( 'textures/ceiling0.png' )
 	];
 
 	// Sets the filter for each texture making it pixelated rather than blurred
@@ -144,19 +144,19 @@ function setupGame() {
 			switch(map[x][y]) {
 				case 0:
 					// Floor
-					var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[0], side: t.FrontSide}));
+					var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({ map: textures[0], side: t.FrontSide }));
 					floor.position.set(-20 + (x * scale), UNITSIZE * 0.2, -30 + (y * scale));
 					scene.add(floor);
 
 					// Ceiling
-					var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[3], side: t.FrontSide}));
+					var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({ map: textures[3], side: t.FrontSide }));
 					ceiling.position.set(-20 + (x * scale), UNITSIZE * 0.4, -30 + (y * scale));
 					scene.add(ceiling);
 					break;
 
 				case 1:
 					// Walls
-					var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide}));
+					var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({ map: textures[Math.floor(Math.random() * 2) + 1], side: t.FrontSide }));
 					wall.position.set(-20 + (x * scale), UNITSIZE * 0.3, -30 + (y * scale));
 					scene.add(wall);
 					objects.push(wall);
@@ -165,7 +165,7 @@ function setupGame() {
 		}
 	}
 
-	var radar = document.createElement("canvas");
+	var radar = document.createElement( 'canvas' );
 	radar.id = "radar";
 	radar.width = 302;
 	radar.height = 152;
