@@ -196,11 +196,11 @@ function update() {
 		key = new Keyboard(!key.leftHand);
 	}
 
-	if (key.down(key.FORWARD) && !collides(new t.Vector3(0, 0, -1), 2)) {
+	if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD)) && !collides(new t.Vector3(0, 0, -1), 2)) {
 		if (position.z > -moveSpeed) {
 			position.z -= speedIncrease * delta;
 		}
-	} else if (key.down(key.BACKWARD) && !collides(new t.Vector3(0, 0, 1), 2)) {
+	} else if ((key.down(key.BACK) || key.down(key.ARROW_BACK)) && !collides(new t.Vector3(0, 0, 1), 2)) {
 		if (position.z < moveSpeed) {
 			position.z += speedIncrease * delta;
 		}
@@ -208,11 +208,11 @@ function update() {
 		position.z = 0;
 	}
 
-	if (key.down(key.LEFT) && !collides(new t.Vector3(-1, 0, 0), 2)) {
+	if ((key.down(key.LEFT) || key.down(key.ARROW_LEFT)) && !collides(new t.Vector3(-1, 0, 0), 2)) {
 		if (position.x > -moveSpeed) {
 			position.x -= speedIncrease * delta;
 		}
-	} else if (key.down(key.RIGHT) && !collides(new t.Vector3(1, 0, 0), 2)) {
+	} else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT)) && !collides(new t.Vector3(1, 0, 0), 2)) {
 		if (position.x < moveSpeed) {
 			position.x += speedIncrease * delta;
 		}
@@ -228,9 +228,9 @@ function update() {
 }
 
 function drawRadar() {
-	var ctx = document.getElementById('radar').getContext('2d');
+	var ctx = document.getElementById( 'radar' ).getContext( '2d' );
 
-	document.getElementById('radar').style.visibility = 'visible';
+	document.getElementById( 'radar' ).style.visibility = 'visible';
 
 	ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
@@ -240,7 +240,7 @@ function drawRadar() {
 				case 1:
 					// Walls
 					ctx.fillStyle = '#0000FF';
-					ctx.fillRect((x * 5), (y * 5), 4, 4);
+					ctx.fillRect(x * 5, y * 5, 4, 4);
 					break;
 			}
 		}

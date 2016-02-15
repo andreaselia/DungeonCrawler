@@ -3,28 +3,29 @@
  * @author Andreas Elia / http://github.com/andreaselia/
  */
 
-var Keyboard = function ( hand ) {
-
-	this.leftHand = hand;
+var Keyboard = function () {
 
 	this.movementSpeed = 1.0;
 	this.autoForward = false;
 
 	this.pressed = {};
 
-	// WASD/Arrow Key = Movement
-	this.FORWARD = ( this.leftHand ? 38 : 87 );
-	this.BACKWARD = ( this.leftHand ? 40 : 83 );
-	this.LEFT = ( this.leftHand ? 37 : 65 );
-	this.RIGHT = ( this.leftHand ? 39 : 68 );
+	// WASD Keys
+	this.FORWARD = 38;
+	this.BACK = 83;
+	this.LEFT = 37;
+	this.RIGHT = 39;
 
-	// SPACE = Continue
+	// Arrow Keys
+	this.ARROW_FORWARD = 87;
+	this.ARROW_BACK = 40;
+	this.ARROW_LEFT = 65;
+	this.ARROW_RIGHT = 68;
+
+	// Space Key
 	this.SPACE = 32;
 
-	// ONE = Switch WASD/Arrow Keys
-	this.ONE = 49;
-
-	// ESC = Pause
+	// Escape Key
 	this.PAUSE = 27;
 
 	this.down = function( keyCode ) {
@@ -48,13 +49,7 @@ var Keyboard = function ( hand ) {
 	document.addEventListener( 'keyup', bind( this, this.onKeyUp ), false );
 
 	function bind( scope, fn ) {
-
-		return function () {
-
-			fn.apply( scope, arguments );
-
-		};
-
+		return function () { fn.apply( scope, arguments ); };
 	};
 
 };

@@ -1,4 +1,4 @@
-var Player = function ( hand ) {
+var Player = function () {
 
 	this.update = function() {
 	};
