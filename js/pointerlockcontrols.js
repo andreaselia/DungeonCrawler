@@ -3,76 +3,76 @@
  * @author Andreas Elia / http://github.com/andreaselia/
  */
 
-THREE.PointerLockControls = function ( camera ) {
+THREE.PointerLockControls = function(camera) {
 
-	var scope = this;
+    var scope = this;
 
-	camera.rotation.set( 0, 0, 0 );
+    camera.rotation.set(0, 0, 0);
 
-	var pitchObject = new THREE.Object3D();
-	pitchObject.add( camera );
+    var pitchObject = new THREE.Object3D();
+    pitchObject.add(camera);
 
-	var yawObject = new THREE.Object3D();
-	yawObject.position.y = 10;
-	yawObject.add( pitchObject );
+    var yawObject = new THREE.Object3D();
+    yawObject.position.y = 10;
+    yawObject.add(pitchObject);
 
-	var PI_2 = Math.PI / 2;
+    var PI_2 = Math.PI / 2;
 
-	var mouseObject;
+    var mouseObject;
 
-	var onMouseMove = function ( event ) {
+    var onMouseMove = function(event) {
 
-		if ( scope.enabled === false ) return;
+        if (scope.enabled === false) return;
 
-		var movementX = event.movementX || event.mozMovementX || 0;
+        var movementX = event.movementX || event.mozMovementX || 0;
 
-		yawObject.rotation.y -= movementX * 0.002;
+        yawObject.rotation.y -= movementX * 0.002;
 
-		pitchObject.rotation.x = Math.max( - PI_2, Math.min( PI_2, pitchObject.rotation.x ) );
+        pitchObject.rotation.x = Math.max(-PI_2, Math.min(PI_2, pitchObject.rotation.x));
 
-		mouseObject = event;
+        mouseObject = event;
 
-	};
+    };
 
-	this.dispose = function() {
+    this.dispose = function() {
 
-		document.removeEventListener( 'mousemove', onMouseMove, false );
+        document.removeEventListener('mousemove', onMouseMove, false);
 
-	}
+    }
 
-	document.addEventListener( 'mousemove', onMouseMove, false );
+    document.addEventListener('mousemove', onMouseMove, false);
 
-	this.enabled = false;
+    this.enabled = false;
 
-	this.getObject = function() {
+    this.getObject = function() {
 
-		return yawObject;
+        return yawObject;
 
-	};
+    };
 
-	this.getMouse = function() {
+    this.getMouse = function() {
 
-		return mouseObject;
+        return mouseObject;
 
-	};
+    };
 
-	this.getDirection = function() {
+    this.getDirection = function() {
 
-		// assumes the camera itself is not rotated
+        // assumes the camera itself is not rotated
 
-		var direction = new THREE.Vector3( 0, 0, - 1 );
-		var rotation = new THREE.Euler( 0, 0, 0, "YXZ" );
+        var direction = new THREE.Vector3(0, 0, -1);
+        var rotation = new THREE.Euler(0, 0, 0, "YXZ");
 
-		return function( v ) {
+        return function(v) {
 
-			rotation.set( pitchObject.rotation.x, yawObject.rotation.y, 0 );
+            rotation.set(pitchObject.rotation.x, yawObject.rotation.y, 0);
 
-			v.copy( direction ).applyEuler( rotation );
+            v.copy(direction).applyEuler(rotation);
 
-			return v;
+            return v;
 
-		}
+        }
 
-	}();
+    }();
 
 };
