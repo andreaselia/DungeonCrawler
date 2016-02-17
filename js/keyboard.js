@@ -5,6 +5,7 @@
 
 var Keyboard = function() {
 
+    // Keys being pressed are stored in this array
     this.pressed = {};
 
     // WASD Keys
