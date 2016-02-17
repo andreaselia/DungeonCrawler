@@ -18,7 +18,7 @@ var Player = function() {
         }
 
         if ((key.down(key.LEFT) || key.down(key.ARROW_LEFT)) && !collides(new t.Vector3(-1, 0, 0), 2)) {
-            if (position.x > -this.moveSpeed) {
+            if (this.position.x > -this.moveSpeed) {
                 this.position.x -= this.speedIncrease * dt;
             }
         } else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT)) && !collides(new t.Vector3(1, 0, 0), 2)) {
@@ -31,9 +31,5 @@ var Player = function() {
     };
 
     this.render = function(scene, camera) {};
-
-    this.getPosition = function() {
-        return this.position;
-    };
 
 };

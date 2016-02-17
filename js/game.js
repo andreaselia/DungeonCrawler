@@ -10,7 +10,26 @@ var t = THREE,
     stats, loader;
 var scene, camera, renderer, clock, controls, key;
 
-var map = [
+// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
+var textures = [];
+
+// level followed by [floors][walls][ceilings]
+var levelTextures = [ [[0], [1, 2], [3]], [[4], [5], [6]] ];
+
+var mapOne = [
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
+    [1, 1, 0, 1, 0, 0, 1, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+];
+
+var mapTwo = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
@@ -24,7 +43,7 @@ var map = [
 ];
 
 // data will store details for loot etc, maybe doors? maybe doors go in map
-var data = [
+var dataOne = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
@@ -36,6 +55,9 @@ var data = [
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
 ];
+
+// What level is currently displayed
+var currentMap = mapTwo;
 
 // Keeps track if the game is in menu state, paused or in-game
 var showGUI = false;
@@ -88,6 +110,18 @@ function init() {
     // The texture loader allows textures to be loaded and kept track of
     loader = new t.TextureLoader();
 
+    // Add textures
+    // Level one
+    textures.push(loader.load('textures/floor0.png'));
+    textures.push(loader.load('textures/wall0.png'));
+    textures.push(loader.load('textures/wall1.png'));
+    textures.push(loader.load('textures/ceiling0.png'));
+
+    // Level two
+    textures.push(loader.load('textures/floor1.png'));
+    textures.push(loader.load('textures/wall2.png'));
+    textures.push(loader.load('textures/ceiling1.png'));
+
     // Initialize the Clock so we can keep track of delta time etc
     clock = new t.Clock();
 
@@ -106,35 +140,32 @@ function init() {
     // Add the controls object to the scene
     scene.add(controls.getObject());
 
-    setupGame();
+    setupGame(currentMap);
 }
 
-function setupGame() {
+function setupGame(level) {
     // Create a box geometry (future maybe PlaneGeometry) for walls, floor and ceiling
     var scale = 5;
     var geometry = new t.CubeGeometry(scale, scale, scale);
 
-    // A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
-    var textures = [
-        loader.load('textures/floor0.png'),
-        loader.load('textures/wall0.png'),
-        loader.load('textures/wall1.png'),
-        loader.load('textures/ceiling0.png')
-    ];
+    // Id value of the current level, values are 1 less than level
+    var currentLevel = ((currentMap == mapOne) ? 0 : 1);
+
+    // var levelTextures = [ [[0], [1, 2], [3]], [[4], [5], [6]] ];
 
     // Sets the filter for each texture making it pixelated rather than blurred
     for (var x = 0; x < textures.length; x++) {
         textures[x].magFilter = t.NearestFilter;
         textures[x].minFilter = t.NearestMipMapLinearFilter;
     }
-
-    for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[0].length; x++) {
-            switch (map[x][y]) {
+console.log((levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0);
+    for (var y = 0; y < level.length; y++) {
+        for (var x = 0; x < level[0].length; x++) {
+            switch (level[x][y]) {
                 case 0:
                     // Floor
                     var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({
-                        map: textures[0],
+                        map: textures[levelTextures[currentLevel][0][0]],
                         side: t.FrontSide
                     }));
                     floor.position.set(-20 + (x * scale), UNITSIZE * 0.2, -30 + (y * scale));
@@ -142,7 +173,7 @@ function setupGame() {
 
                     // Ceiling
                     var ceiling = new t.Mesh(geometry, new t.MeshBasicMaterial({
-                        map: textures[3],
+                        map: textures[levelTextures[currentLevel][2][0]],
                         side: t.FrontSide
                     }));
                     ceiling.position.set(-20 + (x * scale), UNITSIZE * 0.4, -30 + (y * scale));
@@ -152,7 +183,7 @@ function setupGame() {
                 case 1:
                     // Walls
                     var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({
-                        map: textures[Math.floor(Math.random() * 2) + 1],
+                        map: textures[levelTextures[currentLevel][1][(levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0]],
                         side: t.FrontSide
                     }));
                     wall.position.set(-20 + (x * scale), UNITSIZE * 0.3, -30 + (y * scale));
@@ -184,21 +215,21 @@ function update() {
         key.reset(key.ESC);
     }
 
-    controls.getObject().translateX(player.getPosition().x * dt);
-    controls.getObject().translateY(player.getPosition().y * dt);
-    controls.getObject().translateZ(player.getPosition().z * dt);
+    controls.getObject().translateX(player.position.x * dt);
+    controls.getObject().translateY(player.position.y * dt);
+    controls.getObject().translateZ(player.position.z * dt);
 }
 
-function drawRadar() {
+function drawRadar(level) {
     var ctx = document.getElementById('radar').getContext('2d');
 
     document.getElementById('radar').style.visibility = 'visible';
 
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-    for (var y = 0; y < map.length; y++) {
-        for (var x = 0; x < map[0].length; x++) {
-            switch (map[x][y]) {
+    for (var y = 0; y < level.length; y++) {
+        for (var x = 0; x < level[0].length; x++) {
+            switch (level[x][y]) {
                 case 1:
                     // Walls
                     ctx.fillStyle = '#0000FF';
@@ -209,7 +240,7 @@ function drawRadar() {
     }
 
     ctx.fillStyle = '#ff0000';
-    ctx.fillRect(15 + (controls.getObject().position.x * 5) / map.length - 5, 15 + (controls.getObject().position.z * 5) / map.length, 4, 4);
+    ctx.fillRect(15 + (controls.getObject().position.x * 5) / level.length - 5, 15 + (controls.getObject().position.z * 5) / level.length, 4, 4);
 }
 
 function collides(vec, dist) {
@@ -231,7 +262,7 @@ function render() {
 
         if (radarDrawCount == 10) {
             radarDrawCount = 0;
-            drawRadar();
+            drawRadar(currentMap);
         }
     }
 }
