@@ -10,15 +10,11 @@ var t = THREE,
     stats, loader;
 var scene, camera, renderer, clock, controls, key;
 
-// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
-var textures = [];
-
-// level followed by [floors][walls][ceilings]
-var levelTextures = [ [[0], [1, 2], [3]], [[4], [5], [6]] ];
+// 0 = floor, 1 = wall, 2 = spawn point
 
 var mapOne = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 2, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
@@ -34,7 +30,7 @@ var mapTwo = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 2, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
     [1, 1, 0, 1, 0, 0, 1, 0, 0, 1],
@@ -42,22 +38,29 @@ var mapTwo = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
-// data will store details for loot etc, maybe doors? maybe doors go in map
-var dataOne = [
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-];
-
 // What level is currently displayed
 var currentMap = mapTwo;
+
+// Current level (int value)
+var currentLevel = ((currentMap == mapOne) ? 0 : 1);
+
+// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
+var textures = [];
+
+// level followed by [floors][walls][ceilings]
+var levelTextures = [
+    [
+        [0],
+        [1, 2],
+        [3]
+    ],
+    [
+        [4],
+        [5],
+        [6]
+    ]
+];
+var levelFog = ['rgb(74, 86, 53)', 'rgb(53, 55, 85)'];
 
 // Keeps track if the game is in menu state, paused or in-game
 var showGUI = false;
@@ -77,7 +80,6 @@ var blocker = document.getElementById('blocker');
 
 var pointerlockchange = function(event) {
     if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
-        controlsEnabled = true;
         controls.enabled = true;
         blocker.style.display = 'none';
     } else {
@@ -128,17 +130,27 @@ function init() {
     // Creates a new scene object
     scene = new t.Scene();
     // Adds fog to the scene
-    scene.fog = new t.FogExp2(0x4a5635, 0.095);
+    scene.fog = new t.FogExp2(new t.Color(levelFog[currentLevel]), 0.095);
 
     // create a new "Perspective" Camera
     camera = new t.PerspectiveCamera(75, ASPECT, 1, 1000);
-    // Change the cameras position so it is centered within the map
-    camera.position.y = UNITSIZE * 0.1;
 
     // Create a new init of the controls and pass in the camera as the object
     controls = new t.PointerLockControls(camera);
     // Add the controls object to the scene
     scene.add(controls.getObject());
+
+    // Place player in their place
+    for (var y = 0; y < currentMap.length; y++) {
+        for (var x = 0; x < currentMap[0].length; x++) {
+            if (currentMap[x][y] == 2) {
+                //(-20 + (x * scale), UNITSIZE * 0.3, -30 + (y * scale));
+
+            }
+        }
+    }
+
+    player.cameraPosition.y = UNITSIZE * 0.1;
 
     setupGame(currentMap);
 }
@@ -149,7 +161,7 @@ function setupGame(level) {
     var geometry = new t.CubeGeometry(scale, scale, scale);
 
     // Id value of the current level, values are 1 less than level
-    var currentLevel = ((currentMap == mapOne) ? 0 : 1);
+    currentLevel = ((currentMap == mapOne) ? 0 : 1);
 
     // var levelTextures = [ [[0], [1, 2], [3]], [[4], [5], [6]] ];
 
@@ -158,11 +170,12 @@ function setupGame(level) {
         textures[x].magFilter = t.NearestFilter;
         textures[x].minFilter = t.NearestMipMapLinearFilter;
     }
-console.log((levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0);
+
     for (var y = 0; y < level.length; y++) {
         for (var x = 0; x < level[0].length; x++) {
             switch (level[x][y]) {
                 case 0:
+                case 2:
                     // Floor
                     var floor = new t.Mesh(geometry, new t.MeshBasicMaterial({
                         map: textures[levelTextures[currentLevel][0][0]],
@@ -195,7 +208,7 @@ console.log((levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.rando
     }
 
     var radar = document.createElement('canvas');
-    radar.id = "radar";
+    radar.id = 'radar';
     radar.width = 302;
     radar.height = 152;
     document.body.appendChild(radar);
@@ -211,13 +224,17 @@ function update() {
     if (key.down(key.ESC)) {
         document.pointerLockElement = null;
         controls.enabled = false;
-        blocker.style.display = "box";
+        blocker.style.display = 'box';
         key.reset(key.ESC);
     }
 
     controls.getObject().translateX(player.position.x * dt);
     controls.getObject().translateY(player.position.y * dt);
     controls.getObject().translateZ(player.position.z * dt);
+
+    camera.position.x = player.cameraPosition.x;
+    camera.position.y = player.cameraPosition.y;
+    camera.position.z = player.cameraPosition.z;
 }
 
 function drawRadar(level) {
@@ -241,12 +258,6 @@ function drawRadar(level) {
 
     ctx.fillStyle = '#ff0000';
     ctx.fillRect(15 + (controls.getObject().position.x * 5) / level.length - 5, 15 + (controls.getObject().position.z * 5) / level.length, 4, 4);
-}
-
-function collides(vec, dist) {
-    raycaster.setFromCamera(vec, camera);
-    var intersects = raycaster.intersectObjects(objects);
-    return (intersects.length > 0 && intersects[0].distance < dist) ? true : false;
 }
 
 function render() {
