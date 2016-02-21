@@ -150,7 +150,9 @@ function init() {
         }
     }
 
+    controls.getObject().position.x = (UNITSIZE * 0.4);
     player.cameraPosition.y = UNITSIZE * 0.1;
+    controls.getObject().position.z = (UNITSIZE * 0.1);
 
     setupGame(currentMap);
 }
@@ -228,13 +230,11 @@ function update() {
         key.reset(key.ESC);
     }
 
-    controls.getObject().translateX(player.position.x * dt);
-    controls.getObject().translateY(player.position.y * dt);
-    controls.getObject().translateZ(player.position.z * dt);
+    controls.getObject().translateX(player.velocity.x * dt);
+    controls.getObject().translateY(player.velocity.y * dt);
+    controls.getObject().translateZ(player.velocity.z * dt);
 
-    camera.position.x = player.cameraPosition.x;
-    camera.position.y = player.cameraPosition.y;
-    camera.position.z = player.cameraPosition.z;
+    camera.position.copy(player.cameraPosition);
 }
 
 function drawRadar(level) {

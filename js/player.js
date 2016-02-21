@@ -1,36 +1,36 @@
 var Player = function() {
 
     this.cameraPosition = new t.Vector3();
-    this.position = new t.Vector3();
-    this.moveSpeed = 20;
-    this.speedIncrease = 100;
+    this.velocity = new t.Vector3();
+    this.maxVelocity = 20;
+    this.speed = 100;
 
     this.init = function() {
     };
 
     this.update = function(dt) {
         if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD)) && !this.collides(new t.Vector3(0, 0, -1), 2)) {
-            if (this.position.z > -this.moveSpeed) {
-                this.position.z -= this.speedIncrease * dt;
+            if (this.velocity.z > -this.maxVelocity) {
+                this.velocity.z -= this.speed * dt;
             }
         } else if ((key.down(key.BACK) || key.down(key.ARROW_BACK)) && !this.collides(new t.Vector3(0, 0, 1), 2)) {
-            if (this.position.z < this.moveSpeed) {
-                this.position.z += this.speedIncrease * dt;
+            if (this.velocity.z < this.maxVelocity) {
+                this.velocity.z += this.speed * dt;
             }
         } else {
-            this.position.z = 0;
+            this.velocity.z = 0;
         }
 
         if ((key.down(key.LEFT) || key.down(key.ARROW_LEFT)) && !this.collides(new t.Vector3(-1, 0, 0), 2)) {
-            if (this.position.x > -this.moveSpeed) {
-                this.position.x -= this.speedIncrease * dt;
+            if (this.velocity.x > -this.maxVelocity) {
+                this.velocity.x -= this.speed * dt;
             }
         } else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT)) && !this.collides(new t.Vector3(1, 0, 0), 2)) {
-            if (this.position.x < this.moveSpeed) {
-                this.position.x += this.speedIncrease * dt;
+            if (this.velocity.x < this.maxVelocity) {
+                this.velocity.x += this.speed * dt;
             }
         } else {
-            this.position.x = 0;
+            this.velocity.x = 0;
         }
     };
 
