@@ -14,14 +14,14 @@ var scene, camera, renderer, clock, controls, key;
 
 var mapOne = [
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-    [1, 2, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
     [1, 1, 0, 1, 0, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
@@ -30,11 +30,11 @@ var mapTwo = [
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
-    [1, 0, 0, 1, 1, 0, 1, 1, 2, 1],
+    [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 1, 0, 1, 1, 0, 1],
     [1, 0, 0, 1, 0, 0, 1, 0, 0, 1],
     [1, 1, 0, 1, 0, 0, 1, 0, 0, 1],
-    [1, 0, 0, 0, 0, 0, 0, 0, 0, 1],
+    [1, 0, 0, 0, 0, 0, 0, 0, 2, 1],
     [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
 ];
 
@@ -75,6 +75,10 @@ var raycaster;
 var radarDrawCount = 0;
 
 var player;
+
+var spawnSet = false;
+
+var scale = 5;
 
 var blocker = document.getElementById('blocker');
 
@@ -141,25 +145,22 @@ function init() {
     scene.add(controls.getObject());
 
     // Place player in their place
-    for (var y = 0; y < currentMap.length; y++) {
-        for (var x = 0; x < currentMap[0].length; x++) {
-            if (currentMap[x][y] == 2) {
-                //(-20 + (x * scale), UNITSIZE * 0.3, -30 + (y * scale));
-
+    for (var x = 0; x < currentMap.length; x++) {
+        for (var y = 0; y < currentMap[x].length; y++) {
+            if (currentMap[x][y] == 2 && !spawnSet) {
+                controls.getObject().position.x = (UNITSIZE * (x / 10)) ;
+                player.cameraPosition.y = UNITSIZE * 0.1;
+                controls.getObject().position.z = (UNITSIZE * (y / 10)) ;
+                spawnSet = true;
             }
         }
     }
-
-    controls.getObject().position.x = (UNITSIZE * 0.4);
-    player.cameraPosition.y = UNITSIZE * 0.1;
-    controls.getObject().position.z = (UNITSIZE * 0.1);
 
     setupGame(currentMap);
 }
 
 function setupGame(level) {
     // Create a box geometry (future maybe PlaneGeometry) for walls, floor and ceiling
-    var scale = 5;
     var geometry = new t.CubeGeometry(scale, scale, scale);
 
     // Id value of the current level, values are 1 less than level
@@ -173,8 +174,8 @@ function setupGame(level) {
         textures[x].minFilter = t.NearestMipMapLinearFilter;
     }
 
-    for (var y = 0; y < level.length; y++) {
-        for (var x = 0; x < level[0].length; x++) {
+    for (var x = 0; x < level[0].length; x++) {
+        for (var y = 0; y < level.length; y++) {
             switch (level[x][y]) {
                 case 0:
                 case 2:
@@ -183,7 +184,7 @@ function setupGame(level) {
                         map: textures[levelTextures[currentLevel][0][0]],
                         side: t.FrontSide
                     }));
-                    floor.position.set(-20 + (x * scale), UNITSIZE * 0.2, -30 + (y * scale));
+                    floor.position.set((x * scale), UNITSIZE * 0.2, (y * scale));
                     scene.add(floor);
 
                     // Ceiling
@@ -191,7 +192,7 @@ function setupGame(level) {
                         map: textures[levelTextures[currentLevel][2][0]],
                         side: t.FrontSide
                     }));
-                    ceiling.position.set(-20 + (x * scale), UNITSIZE * 0.4, -30 + (y * scale));
+                    ceiling.position.set((x * scale), UNITSIZE * 0.4, (y * scale));
                     scene.add(ceiling);
                     break;
 
@@ -201,7 +202,7 @@ function setupGame(level) {
                         map: textures[levelTextures[currentLevel][1][(levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0]],
                         side: t.FrontSide
                     }));
-                    wall.position.set(-20 + (x * scale), UNITSIZE * 0.3, -30 + (y * scale));
+                    wall.position.set((x * scale), UNITSIZE * 0.3, (y * scale));
                     scene.add(wall);
                     objects.push(wall);
                     break;
@@ -244,8 +245,8 @@ function drawRadar(level) {
 
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
-    for (var y = 0; y < level.length; y++) {
-        for (var x = 0; x < level[0].length; x++) {
+    for (var x = 0; x < level.length; x++) {
+        for (var y = 0; y < level[x].length; y++) {
             switch (level[x][y]) {
                 case 1:
                     // Walls
