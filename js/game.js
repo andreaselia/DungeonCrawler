@@ -39,10 +39,10 @@ var mapTwo = [
 ];
 
 // What level is currently displayed
-var currentMap = mapTwo;
+var currentMap;
 
 // Current level (int value)
-var currentLevel = ((currentMap == mapOne) ? 0 : 1);
+var currentLevel;
 
 // A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
 var textures = [];
@@ -144,19 +144,7 @@ function init() {
     // Add the controls object to the scene
     scene.add(controls.getObject());
 
-    // Place player in their place
-    for (var x = 0; x < currentMap.length; x++) {
-        for (var y = 0; y < currentMap[x].length; y++) {
-            if (currentMap[x][y] == 2 && !spawnSet) {
-                controls.getObject().position.x = UNITSIZE * (x / 10);
-                player.cameraPosition.y = UNITSIZE * 0.1;
-                controls.getObject().position.z = UNITSIZE * (y / 10);
-                spawnSet = true;
-            }
-        }
-    }
-
-    setupGame(currentMap);
+    setupLevel(mapOne);
 }
 
 function setupGame(level) {
@@ -217,6 +205,26 @@ function setupGame(level) {
     document.body.appendChild(radar);
 }
 
+function setupLevel(whatMap) {
+    spawnSet = false;
+    currentMap = whatMap;
+    currentLevel = ((currentMap == mapOne) ? 0 : 1);
+
+    // Place player in their place
+    for (var x = 0; x < currentMap.length; x++) {
+        for (var y = 0; y < currentMap[x].length; y++) {
+            if (currentMap[x][y] == 2 && !spawnSet) {
+                controls.getObject().position.x = UNITSIZE * (x / 10);
+                player.cameraPosition.y = UNITSIZE * 0.1;
+                controls.getObject().position.z = UNITSIZE * (y / 10);
+                spawnSet = true;
+            }
+        }
+    }
+
+    setupGame(currentMap);
+}
+
 function update() {
     var dt = clock.getDelta();
 
@@ -229,6 +237,11 @@ function update() {
         controls.enabled = false;
         blocker.style.display = 'box';
         key.reset(key.ESC);
+    }
+
+    if (key.down(key.SPACE)) {
+        setupLevel((currentMap == mapOne) ? mapTwo : mapOne);
+        key.reset(key.SPACE);
     }
 
     controls.getObject().translateX(player.velocity.x * dt);
