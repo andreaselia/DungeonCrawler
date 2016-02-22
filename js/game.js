@@ -148,9 +148,9 @@ function init() {
     for (var x = 0; x < currentMap.length; x++) {
         for (var y = 0; y < currentMap[x].length; y++) {
             if (currentMap[x][y] == 2 && !spawnSet) {
-                controls.getObject().position.x = (UNITSIZE * (x / 10)) ;
+                controls.getObject().position.x = UNITSIZE * (x / 10);
                 player.cameraPosition.y = UNITSIZE * 0.1;
-                controls.getObject().position.z = (UNITSIZE * (y / 10)) ;
+                controls.getObject().position.z = UNITSIZE * (y / 10);
                 spawnSet = true;
             }
         }
@@ -184,7 +184,7 @@ function setupGame(level) {
                         map: textures[levelTextures[currentLevel][0][0]],
                         side: t.FrontSide
                     }));
-                    floor.position.set((x * scale), UNITSIZE * 0.2, (y * scale));
+                    floor.position.set(x * scale, UNITSIZE * 0.2, y * scale);
                     scene.add(floor);
 
                     // Ceiling
@@ -192,29 +192,29 @@ function setupGame(level) {
                         map: textures[levelTextures[currentLevel][2][0]],
                         side: t.FrontSide
                     }));
-                    ceiling.position.set((x * scale), UNITSIZE * 0.4, (y * scale));
-                    scene.add(ceiling);
-                    break;
+                    ceiling.position.setx * scale, UNITSIZE * 0.4, y * scale);
+            scene.add(ceiling);
+            break;
 
-                case 1:
-                    // Walls
-                    var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({
-                        map: textures[levelTextures[currentLevel][1][(levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0]],
-                        side: t.FrontSide
-                    }));
-                    wall.position.set((x * scale), UNITSIZE * 0.3, (y * scale));
-                    scene.add(wall);
-                    objects.push(wall);
-                    break;
-            }
+            case 1:
+                // Walls
+                var wall = new t.Mesh(geometry, new t.MeshBasicMaterial({
+                    map: textures[levelTextures[currentLevel][1][(levelTextures[currentLevel][1].length > 1) ? (Math.floor(Math.random() * levelTextures[currentLevel][1].length) + 1) - 1 : 0]],
+                    side: t.FrontSide
+                }));
+                wall.position.set(x * scale, UNITSIZE * 0.3, y * scale);
+                scene.add(wall);
+                objects.push(wall);
+                break;
         }
     }
+}
 
-    var radar = document.createElement('canvas');
-    radar.id = 'radar';
-    radar.width = 302;
-    radar.height = 152;
-    document.body.appendChild(radar);
+var radar = document.createElement('canvas');
+radar.id = 'radar';
+radar.width = 302;
+radar.height = 152;
+document.body.appendChild(radar);
 }
 
 function update() {
