@@ -60,7 +60,12 @@ var levelTextures = [
         [6]
     ]
 ];
-var levelFog = ['rgb(74, 86, 53)', 'rgb(53, 55, 85)'];
+
+// Level fog [colour, dist intensity]
+var levelFog = [
+    ['rgb(74, 86, 53)', 0.095],
+    ['rgb(53, 55, 85)', 0.095]
+];
 
 // Keeps track if the game is in menu state, paused or in-game
 var showGUI = false;
@@ -70,13 +75,11 @@ var objects = [];
 
 var mouse = new t.Vector2();
 
-var raycaster;
-
 var radarDrawCount = 0;
 
 var player;
 
-var spawnSet = false;
+var spawnSet;
 
 var scale = 5;
 
@@ -108,10 +111,8 @@ function init() {
     // Adds the keyboard class that handles keyboard input
     key = new Keyboard();
 
+    // Create the player
     player = new Player();
-
-    // Raycaster for collisions
-    raycaster = new t.Raycaster();
 
     // The texture loader allows textures to be loaded and kept track of
     loader = new t.TextureLoader();
@@ -133,17 +134,20 @@ function init() {
 
     // Creates a new scene object
     scene = new t.Scene();
-    // Adds fog to the scene
-    scene.fog = new t.FogExp2(new t.Color(levelFog[currentLevel]), 0.095);
 
     // create a new "Perspective" Camera
     camera = new t.PerspectiveCamera(75, ASPECT, 1, 1000);
 
     // Create a new init of the controls and pass in the camera as the object
     controls = new t.PointerLockControls(camera);
+
     // Add the controls object to the scene
     scene.add(controls.getObject());
 
+    // Add the players cube tracker
+    scene.add(player.cube);
+
+    // Create the first level using the first level array
     setupLevel(mapOne);
 }
 
@@ -210,12 +214,15 @@ function setupLevel(whatMap) {
     currentMap = whatMap;
     currentLevel = ((currentMap == mapOne) ? 0 : 1);
 
+    // Adds fog to the scene
+    scene.fog = new t.FogExp2(new t.Color(levelFog[currentLevel][0]), levelFog[currentLevel][1]);
+
     // Place player in their place
     for (var x = 0; x < currentMap.length; x++) {
         for (var y = 0; y < currentMap[x].length; y++) {
             if (currentMap[x][y] == 2 && !spawnSet) {
                 controls.getObject().position.x = UNITSIZE * (x / 10);
-                player.cameraPosition.y = UNITSIZE * 0.1;
+                controls.getObject().position.y = UNITSIZE * (3 / 10);
                 controls.getObject().position.z = UNITSIZE * (y / 10);
                 spawnSet = true;
             }
@@ -248,7 +255,9 @@ function update() {
     controls.getObject().translateY(player.velocity.y * dt);
     controls.getObject().translateZ(player.velocity.z * dt);
 
-    camera.position.copy(player.cameraPosition);
+    player.cube.position.x = controls.getObject().position.x;
+    player.cube.position.y = controls.getObject().position.y;
+    player.cube.position.z = controls.getObject().position.z;
 }
 
 function drawRadar(level) {

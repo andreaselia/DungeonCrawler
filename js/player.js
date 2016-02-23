@@ -4,12 +4,14 @@ var Player = function() {
     this.velocity = new t.Vector3();
     this.maxVelocity = 20;
     this.speed = 100;
-
-    this.init = function() {
-    };
+    this.cube = new t.Mesh(new t.CubeGeometry(5, 5, 5), new t.MeshPhongMaterial({
+        color: 0x11ee11,
+        specular: 0x000000
+    }));;
+    this.raycaster = new t.Raycaster();
 
     this.update = function(dt) {
-        if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD)) && !this.collides(new t.Vector3(0, 0, -1), 2)) {
+        if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD)) && !this.collides(new t.Vector3(0, 0, -1), 2) && !this.collides(new t.Vector3(-1, 0, -1), 2)) {
             if (this.velocity.z > -this.maxVelocity) {
                 this.velocity.z -= this.speed * dt;
             }
@@ -37,9 +39,9 @@ var Player = function() {
     this.render = function(scene, camera) {};
 
     this.collides = function(vec, dist) {
-        raycaster.setFromCamera(vec, camera);
-        var intersects = raycaster.intersectObjects(objects);
-        return (intersects.length > 0 && intersects[0].distance < dist) ? true : false;
+        this.raycaster.setFromCamera(vec, camera);
+        var intersects = this.raycaster.intersectObjects(objects);
+        return (intersects.length > 0 && intersects[0].distance < dist);
     };
 
 };
