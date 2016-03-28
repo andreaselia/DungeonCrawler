@@ -1,62 +1,46 @@
-var Player = function()
-{
+/**
+ * @author Andreas Elia / http://github.com/andreaselia/
+ */
+
+var Player = function() {
     this.cameraPosition = new t.Vector3();
     this.velocity = new t.Vector3();
     this.maxVelocity = 20;
     this.speed = 5;
     this.cube = null;
 
-    this.init = function()
-    {
+    this.init = function() {
         // Add the players cube
         this.cube = new t.Mesh(new t.CubeGeometry(0.02, 0.02, 0.02), new t.MeshLambertMaterial());
         this.cube.visible = false;
     };
 
-    this.update = function(dt)
-    {
-        // Forward movement
-        if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD)))
-        {
-            if (this.velocity.z > -this.maxVelocity)
-            {
+    this.update = function(dt) {
+        if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD))) {
+            // Forward movement
+            if (this.velocity.z > -this.maxVelocity) {
                 this.velocity.z = -this.speed;
             }
-        }
-
-        // Backward movement
-        else if ((key.down(key.BACK) || key.down(key.ARROW_BACK)))
-        {
-            if (this.velocity.z < this.maxVelocity)
-            {
+        } else if ((key.down(key.BACK) || key.down(key.ARROW_BACK))) {
+            // Backward movement
+            if (this.velocity.z < this.maxVelocity) {
                 this.velocity.z = this.speed;
             }
-        }
-        else
-        {
+        } else {
             this.velocity.z = 0;
         }
 
-        // Left movement
-        if ((key.down(key.LEFT) || key.down(key.ARROW_LEFT)))
-        {
-            if (this.velocity.x > -this.maxVelocity)
-            {
+        if ((key.down(key.LEFT) || key.down(key.ARROW_LEFT))) {
+            // Left movement
+            if (this.velocity.x > -this.maxVelocity) {
                 this.velocity.x = -this.speed;
             }
-        }
-
-        // Right movement
-        else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT)))
-        {
-            if (this.velocity.x < this.maxVelocity)
-            {
+        } else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT))) {
+            // Right movement
+            if (this.velocity.x < this.maxVelocity) {
                 this.velocity.x = this.speed;
             }
-
-        }
-        else
-        {
+        } else {
             this.velocity.x = 0;
         }
 
@@ -65,6 +49,10 @@ var Player = function()
         var storedPositionZ = controls.getObject().position.z;
 
         var maxNudge = 0.2;
+
+        if (DEBUG) {
+            console.log(controls.getObject().rotation.y);
+        }
 
         var nudgeX = Math.min(this.velocity.x * dt, maxNudge);
         var nudgeY = Math.min(this.velocity.y * dt, maxNudge);
@@ -79,12 +67,9 @@ var Player = function()
 
         var colliding = false;
 
-        for (var x = 0; x < map.length; x++)
-        {
-            for (var z = 0; z < map[x].length; z++)
-            {
-                switch (map[z][x])
-                {
+        for (var x = 0; x < map.length; x++) {
+            for (var z = 0; z < map[x].length; z++) {
+                switch (map[x][z]) {
                     case Tile.WALL:
                     case Tile.GATE:
                         var tileX = x * scale;
@@ -97,8 +82,7 @@ var Player = function()
                         var minTileZ = tileZ - scale / 2 - radius;
                         var maxTileZ = tileZ + scale / 2 + radius;
 
-                        if (minTileX <= currentPositionX && currentPositionX <= maxTileX && minTileZ <= currentPositionZ && currentPositionZ <= maxTileZ)
-                        {
+                        if (minTileX <= currentPositionX && currentPositionX <= maxTileX && minTileZ <= currentPositionZ && currentPositionZ <= maxTileZ) {
                             colliding = true;
                             this.velocity.x = 0;
                             this.velocity.z = 0;
@@ -108,8 +92,7 @@ var Player = function()
             }
         }
 
-        if (colliding)
-        {
+        if (colliding) {
             // The player collided so the position is set back to the position before colliding
             controls.getObject().position.set(storedPositionX, storedPositionY, storedPositionZ);
 

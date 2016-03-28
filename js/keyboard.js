@@ -3,8 +3,7 @@
  * @author mrdoob / http://mrdoob.com/
  */
 
-var Keyboard = function()
-{
+var Keyboard = function() {
     // Keys being pressed are stored in this array
     this.pressed = {};
 
@@ -20,41 +19,33 @@ var Keyboard = function()
     this.ARROW_LEFT = 65;
     this.ARROW_RIGHT = 68;
 
-    // Space Key
-    this.SPACE = 32;
-
-    this.down = function(keyCode)
-    {
+    this.down = function(keyCode) {
         return this.pressed[keyCode];
     };
 
-    this.reset = function(keyCode)
-    {
+    this.reset = function(keyCode) {
         delete this.pressed[keyCode];
     };
 
-    this.onKeyDown = function(event)
-    {
+    this.onKeyDown = function(event) {
         this.pressed[event.keyCode] = true;
     };
 
-    this.onKeyUp = function(event)
-    {
+    this.onKeyUp = function(event) {
         delete this.pressed[event.keyCode];
     };
 
-    document.addEventListener('contextmenu', function(event)
-    {
+    function preventDefaults(event) {
         event.preventDefault();
-    }, false);
-    document.addEventListener('keydown', bind(this, this.onKeyDown), false);
-    document.addEventListener('keyup', bind(this, this.onKeyUp), false);
+    };
 
-    function bind(scope, fn)
-    {
-        return function()
-        {
+    function bind(scope, fn) {
+        return function() {
             fn.apply(scope, arguments);
         };
     };
+
+    document.addEventListener('contextmenu', preventDefaults, false);
+    document.addEventListener('keydown', bind(this, this.onKeyDown), false);
+    document.addEventListener('keyup', bind(this, this.onKeyUp), false);
 };
