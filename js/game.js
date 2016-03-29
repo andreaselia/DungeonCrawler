@@ -5,6 +5,7 @@
 var element = document.body;
 
 var DEBUG = false;
+
 var t = THREE;
 
 var WIDTH = window.innerWidth;
@@ -44,6 +45,10 @@ var levelTextures = [
         [3],
         [4]
     ]
+];
+
+var levelFog = [
+    ['rgb(74, 86, 53)', 0.3]
 ];
 
 // Keeps track if the game is in menu state, paused or in-game
@@ -126,16 +131,9 @@ function init() {
     // Add the players cube to the scene
     scene.add(player.cube);
 
-    // Generate the dungeon (width, height, interations, minRoomSize, maxRoomSize, maxNumRooms, maxRoomArea)
-    var generator = new Dungeon(32, 32, 4, 5, 15, 50, 150);
-    generator.generate();
-    map = generator.getOutput();
+    // Adds fog to the scene
+    scene.fog = new t.FogExp2(new t.Color(levelFog[0][0]), levelFog[0][1]);
 
-    // Create the first level using the first level array
-    setupGame();
-}
-
-function setupGame() {
     // Sets the filter for each texture making it pixelated rather than blurred
     for (var x = 0; x < textures.length; x++) {
         textures[x].magFilter = t.NearestFilter;
@@ -148,10 +146,20 @@ function setupGame() {
     radar.height = 200;
     document.body.appendChild(radar);
 
+    // Create the first level using the first level array
     setupLevel();
 }
 
 function setupLevel() {
+    // Generate the dungeon (size, interations, minRoomSize, maxRoomSize, maxNumRooms, maxRoomArea)
+    var generator = new Dungeon(32, 5, 7, 15, 34, 130);
+
+    // Generate the map
+    generator.init();
+
+    // Set the current map array to the output that was generated
+    map = generator.getOutput();
+
     // Some variables to deal with player spawning and what map is selected
     spawnSet = false;
 
@@ -257,6 +265,10 @@ function drawRadar() {
 
     ctx.fillStyle = '#87CA6A';
     ctx.fillRect(20 + ((player.cube.position.x / scale) * 5), 20 + ((player.cube.position.z / scale) * 5), 4, 4);
+
+    ctx.fillStyle = '#FF4C4C';
+    //controls.getObject().rotation.y
+    // ctx.fillRect()
 }
 
 function render() {
@@ -351,7 +363,8 @@ function pointerlockchange(event) {
     if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
         controls.enabled = true;
         blocker.style.display = 'none';
-    } else {
+    }
+    else {
         controls.enabled = false;
         blocker.style.display = 'box';
     }

@@ -50,10 +50,6 @@ var Player = function() {
 
         var maxNudge = 0.2;
 
-        if (DEBUG) {
-            console.log(controls.getObject().rotation.y);
-        }
-
         var nudgeX = Math.min(this.velocity.x * dt, maxNudge);
         var nudgeY = Math.min(this.velocity.y * dt, maxNudge);
         var nudgeZ = Math.min(this.velocity.z * dt, maxNudge);
@@ -75,7 +71,7 @@ var Player = function() {
                         var tileX = x * scale;
                         var tileZ = z * scale;
 
-                        var radius = 0.15;
+                        var radius = 0.2;
 
                         var minTileX = tileX - scale / 2 - radius;
                         var maxTileX = tileX + scale / 2 + radius;
