@@ -265,10 +265,6 @@ function drawRadar() {
 
     ctx.fillStyle = '#87CA6A';
     ctx.fillRect(20 + ((player.cube.position.x / scale) * 5), 20 + ((player.cube.position.z / scale) * 5), 4, 4);
-
-    ctx.fillStyle = '#FF4C4C';
-    //controls.getObject().rotation.y
-    // ctx.fillRect()
 }
 
 function render() {
@@ -327,7 +323,7 @@ function onWindowResize() {
 
 /**
  * Handles mouse clicking
- * @param  {MouseEvent} event
+ * @param  {EventListener} event
  */
 function onMouseDown(event) {
     event.preventDefault();
@@ -357,7 +353,7 @@ function onMouseDown(event) {
 
 /**
  * Handles the showing and hiding of the main menu
- * @param  {pointerLockElement} event
+ * @param  {EventListener} event
  */
 function pointerlockchange(event) {
     if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
@@ -372,6 +368,7 @@ function pointerlockchange(event) {
 
 /**
  * Handles pointer lock controls
+ * @param  {EventListener} max
  */
 function pointerlockrequest(event) {
     // Request the pointer lock from the browser
