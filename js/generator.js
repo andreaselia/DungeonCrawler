@@ -265,14 +265,14 @@ var DungeonGenerator = function(size, roomMinSize, roomMaxSize, maxRoomCount, ro
 
         // Check the X for possibly connected rooms
         for (var x = room.x + 1; x < room.x + room.width - 1; x++) {
-            this.checkRoomList(x, room.y, room, connectedRooms);
-            this.checkRoomList(x, room.y + room.height - 1, room, connectedRooms);
-        }
+            // Check the Y for possibly connected rooms
+            for (var y = room.y + 1; y < room.y + room.height - 1; y++) {
+                this.checkRoomList(x, room.y, room, connectedRooms);
+                this.checkRoomList(x, room.y + room.height - 1, room, connectedRooms);
 
-        // Check the Y for possibly connected rooms
-        for (var y = room.y + 1; y < room.y + room.height - 1; y++) {
-            this.checkRoomList(room.x, y, room, connectedRooms);
-            this.checkRoomList(room.x + room.width - 1, y, room, connectedRooms);
+                this.checkRoomList(room.x, y, room, connectedRooms);
+                this.checkRoomList(room.x + room.width - 1, y, room, connectedRooms);
+            }
         }
 
         // Return an array of connected rooms
