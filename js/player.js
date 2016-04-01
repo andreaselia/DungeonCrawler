@@ -1,6 +1,6 @@
 /**
  * @author Andreas Elia / http://github.com/andreaselia/
- * @credit Steve / https://www.reddit.com/user/stovenn
+ * @credit steveOw / http://stackoverflow.com/users/2748766/steveow
  */
 
 var Player = function() {
