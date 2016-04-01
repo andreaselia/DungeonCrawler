@@ -69,6 +69,7 @@ var scale = 1;
 var blocker = document.getElementById('blocker');
 
 function init() {
+    // If debug mode is active then create the stats
     if (DEBUG) {
         // Create and add the stats to the application with default mode 0
         stats = new Stats();
@@ -140,6 +141,7 @@ function init() {
         textures[x].minFilter = t.NearestMipMapLinearFilter;
     }
 
+    // Create and add the radar/minimap element
     var radar = document.createElement('canvas');
     radar.id = 'radar';
     radar.width = 200;
@@ -151,8 +153,8 @@ function init() {
 }
 
 function setupLevel() {
-    // Generate the dungeon (size, interations, minRoomSize, maxRoomSize, maxNumRooms, maxRoomArea)
-    var generator = new Dungeon(32, 5, 7, 15, 34, 130);
+    // Create a new isntance of DungeonGenerator (size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
+    var generator = new DungeonGenerator(32, 7, 15, 34, 150);
 
     // Generate the map
     generator.init();
@@ -166,30 +168,43 @@ function setupLevel() {
     // Geometry used for walls, ceilings and floors
     var cubeGeometry = new t.CubeGeometry(scale, scale, scale);
 
+    // Loop through the map
     for (var x = 0; x < map.length; x++) {
         for (var z = 0; z < map[x].length; z++) {
             switch (map[x][z]) {
                 case Tile.FLOOR:
                 case Tile.SPAWN:
                 case Tile.GATE:
+                    // If the current tile is a spawn tile and no spawn is set then set it
                     if (map[x][z] == Tile.SPAWN && !spawnSet) {
+                        // Set the controls position
                         controls.getObject().position.set(x * scale, 3 * scale, z * scale);
+
+                        // Set the players cube position
                         player.cube.position.set(x, 3, z);
+
+                        // There is no longer a need to check for spawn set so set it to true
                         spawnSet = true;
                     }
 
+                    // If the tile is a gate tile
                     if (map[x][z] == Tile.GATE) {
+                        // Create a gate mesh
                         var gate = new t.Mesh(cubeGeometry, new t.MeshLambertMaterial({
                             map: textures[levelTextures[0][3][0]],
                             side: t.FrontSide
                         }));
 
+                        // Set the gate position
                         gate.position.set(x * scale, 3 * scale, z * scale);
+
+                        // Set the name for gate collision with mouse detection
                         gate.name = {
                             id: 'gate' + z + x,
                             z: z,
                             x: x
                         };
+
                         // Add gate to scene
                         scene.add(gate);
 
@@ -197,32 +212,38 @@ function setupLevel() {
                         objects.push(gate);
                     }
 
+                    // Create a floor mesh
                     var floor = new t.Mesh(cubeGeometry, new t.MeshLambertMaterial({
                         map: textures[levelTextures[0][0][0]],
                         side: t.FrontSide
                     }));
 
+                    // Set the floor mesh position
                     floor.position.set(x * scale, 2 * scale, z * scale);
 
                     // Add floor to scene
                     scene.add(floor);
 
+                    // Create a ceiling mesh
                     var ceiling = new t.Mesh(cubeGeometry, new t.MeshLambertMaterial({
                         map: textures[levelTextures[0][2][0]],
                         side: t.FrontSide
                     }));
 
+                    // Set the ceiling mesh position
                     ceiling.position.set(x * scale, 4 * scale, z * scale);
 
                     // Add ceiling to scene
                     scene.add(ceiling);
                     break;
                 case Tile.WALL:
+                    // Create a wall mesh
                     var wall = new t.Mesh(cubeGeometry, new t.MeshLambertMaterial({
                         map: textures[levelTextures[0][1][(levelTextures[0][1].length > 1) ? (Math.floor(Math.random() * levelTextures[0][1].length) + 1) - 1 : 0]],
                         side: t.FrontSide
                     }));
 
+                    // Set the wall mesh position
                     wall.position.set(x * scale, 3 * scale, z * scale);
 
                     // Add wall to scene
@@ -237,6 +258,7 @@ function setupLevel() {
 }
 
 function update() {
+    // Get the clocks delta time
     var dt = clock.getDelta();
 
     // Update the player
@@ -244,18 +266,24 @@ function update() {
 }
 
 function drawRadar() {
+    // Create a radar/minimap canvas element
     var ctx = document.getElementById('radar').getContext('2d');
     document.getElementById('radar').style.visibility = 'visible';
+
+    // Clear the canvas when called
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
 
+    // Loop through the map
     for (var x = 0; x < map.length; x++) {
         for (var z = 0; z < map[x].length; z++) {
             switch (map[x][z]) {
                 case Tile.WALL:
+                    // Drawing a wall tile
                     ctx.fillStyle = '#4C4CFF';
                     ctx.fillRect(20 + x * 5, 20 + z * 5, 4, 4);
                     break;
                 case Tile.GATE:
+                    // Drawing a gate tile
                     ctx.fillStyle = '#FF4C4C';
                     ctx.fillRect(20 + x * 5, 20 + z * 5, 4, 4);
                     break;
@@ -263,6 +291,7 @@ function drawRadar() {
         }
     }
 
+    // Drawing the player at it's position but modified to fit on the minimap
     ctx.fillStyle = '#87CA6A';
     ctx.fillRect(20 + ((player.cube.position.x / scale) * 5), 20 + ((player.cube.position.z / scale) * 5), 4, 4);
 }
@@ -271,16 +300,18 @@ function render() {
     // Render the scene
     renderer.render(scene, camera);
 
-    // Do any needed player rendering
-    player.render(scene, camera);
-
     // If showGUI is true, render the radar every X amount of seconds
     if (showGUI) {
+        // Increase the radar draw counter
         radarDrawCount++;
 
+        // If the radar draw count is equal to 10
         if (radarDrawCount == 10) {
-            radarDrawCount = 0;
+            // Draw the radar
             drawRadar();
+
+            // Reset the draw counter
+            radarDrawCount = 0;
         }
     }
 }
@@ -289,6 +320,7 @@ function render() {
  * Handles the calling of the update and render functions as well as stats tracking
  */
 function animate() {
+    // If debug mode is active enable stats
     if (DEBUG) {
         stats.begin();
     }
@@ -297,11 +329,12 @@ function animate() {
     update();
     render();
 
+    // If debug mode is active enable stats
     if (DEBUG) {
         stats.end();
     }
 
-    // Tells the browser we wish to recall the same function
+    // Tells the browser we wish to recall the same function whenever possible
     requestAnimationFrame(animate);
 }
 
@@ -335,15 +368,25 @@ function onMouseDown(event) {
         mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
         mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
 
+        // Set the raycaster from the mouse to the camera
         raycaster.setFromCamera(mouse, camera);
 
+        // See if there is an intersection
         var intersects = raycaster.intersectObjects(objects);
 
+        // If there is an intersection
         if (intersects.length > 0) {
+            // Loop through possible collisions
             for (var i = 0; i < objects.length; i++) {
+                // Check the current collision by each object to see if they are a gate and not a wall
                 if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
-                    map[intersects[0].object.name.x][intersects[0].object.name.z] = 0;
+                    // Set this specific map tile to a floor so it no longer registers as a gate collision
+                    map[intersects[0].object.name.x][intersects[0].object.name.z] = Tile.FLOOR;
+
+                    // Remove the gate from the objects array
                     objects.splice(objects.indexOf(objects[i]), 1);
+
+                    // Remove the gate object from the scene
                     scene.remove(intersects[0].object);
                 }
             }

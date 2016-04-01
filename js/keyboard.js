@@ -1,6 +1,6 @@
 /**
  * @author Andreas Elia / http://github.com/andreaselia/
- * @author mrdoob / http://mrdoob.com/
+ * @credit mrdoob / http://mrdoob.com/
  */
 
 var Keyboard = function() {
