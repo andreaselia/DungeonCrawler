@@ -65,28 +65,28 @@ var DungeonGenerator = function(size, roomMinSize, roomMaxSize, maxRoomCount, ro
                 var direction = random(Direction.NORTH, Direction.WEST + 1);
 
                 // The direction is north so we move room closer to room2
-                if (direction == Direction.NORTH) {
+                if (direction == Direction.NORTH && room2 != undefined) {
                     room.x = random(room2.x - room2.width + 3, room2.x + room2.width - 2);
                     room.y = room2.y - room2.height + 1;
                 }
                 // The direction is east so we move room closer to room2
-                else if (direction == Direction.EAST) {
+                else if (direction == Direction.EAST && room2 != undefined) {
                     room.x = room2.x + room2.width - 1;
                     room.y = random(room2.y - room2.height + 3, room2.y + room2.height - 2);
                 }
                 // The direction is south so we move room closer to room2
-                else if (direction == Direction.SOUTH) {
+                else if (direction == Direction.SOUTH && room2 != undefined) {
                     room.x = random(room2.x - room2.width + 3, room2.x + room2.width - 2);
                     room.y = room2.y + room2.height - 1;
                 }
                 // The direction is west so we move room closer to room2
-                else if (direction == Direction.WEST) {
+                else if (direction == Direction.WEST && room2 != undefined) {
                     room.x = room2.x - room2.width + 1;
                     room.y = random(room2.y - room2.height + 3, room2.y + room2.height - 2);
                 }
 
                 // Check to see if the add room was returned true and added
-                if (this.addRoom(room)) {
+                if (this.addRoom(room) && room2 != undefined) {
                     // Add the gate since the room was added
                     this.addGate(this.getGateLocation(room, room2));
 
@@ -176,6 +176,7 @@ var DungeonGenerator = function(size, roomMinSize, roomMaxSize, maxRoomCount, ro
         for (var x = 0; x < this.size; x++) {
             // Make the tiles array two dimensional
             output[x] = [];
+
             for (var y = 0; y < this.size; y++) {
                 // Set all of the tiles to floor by default
                 output[x][y] = Tile.FLOOR;
@@ -189,8 +190,10 @@ var DungeonGenerator = function(size, roomMinSize, roomMaxSize, maxRoomCount, ro
             // Loop through each room width and height
             for (var x = 0; x < room.width; x++) {
                 for (var y = 0; y < room.height; y++) {
-                    // Replicate all of the rooms tiles to the array here to be output
-                    output[x + room.x][y + room.y] = room.tiles[x][y];
+                    if (output[x + room.x] != undefined) {
+                        // Replicate all of the rooms tiles to the array here to be output
+                        output[x + room.x][y + room.y] = room.tiles[x][y];
+                    }
                 }
             }
         }
@@ -235,20 +238,22 @@ var DungeonGenerator = function(size, roomMinSize, roomMaxSize, maxRoomCount, ro
      * @param  {Array} connectedRooms
      */
     this.checkRoomList = function(x, y, room, connectedRooms) {
-        // Store the rooms at the given position in an array
-        var rooms = this.roomList[x][y];
+        if (this.roomList[x] != undefined) {
+            // Store the rooms at the given position in an array
+            var rooms = this.roomList[x][y];
 
-        // Loop through array of rooms
-        for (var i = 0; i < rooms.length; i++) {
-            // Store the current room being checked index number
-            var currentIndex = connectedRooms.indexOf(rooms[i]);
+            // Loop through array of rooms
+            for (var i = 0; i < rooms.length; i++) {
+                // Store the current room being checked index number
+                var currentIndex = connectedRooms.indexOf(rooms[i]);
 
-            // Check to see if the room is the one passed as a parameter and don't check it
-            if (rooms[i] != room && currentIndex < 0) {
-                // Ensure the current position is not a corner as it would be inaccessible
-                if ((x - rooms[i].x > 0 && x - rooms[i].x < rooms[i].width - 1) || (y - rooms[i].y > 0 && y - rooms[i].y < rooms[i].height - 1)) {
-                    // Add the current room being checked to the connected rooms array
-                    connectedRooms.push(rooms[i]);
+                // Check to see if the room is the one passed as a parameter and don't check it
+                if (rooms[i] != room && currentIndex < 0) {
+                    // Ensure the current position is not a corner as it would be inaccessible
+                    if ((x - rooms[i].x > 0 && x - rooms[i].x < rooms[i].width - 1) || (y - rooms[i].y > 0 && y - rooms[i].y < rooms[i].height - 1)) {
+                        // Add the current room being checked to the connected rooms array
+                        connectedRooms.push(rooms[i]);
+                    }
                 }
             }
         }

@@ -4,7 +4,9 @@
 
 var element = document.body;
 
-var DEBUG = false;
+var DEBUG = true; //false;
+
+var stats, gui;
 
 var t = THREE;
 
@@ -12,8 +14,7 @@ var WIDTH = window.innerWidth;
 var HEIGHT = window.innerHeight;
 var ASPECT = WIDTH / HEIGHT;
 
-var stats, loader;
-var scene, camera, renderer, clock;
+var scene, camera, renderer, clock, loader;
 var controls, key;
 
 // 0 = floor, 1 = wall, 2 = spawn point, 3 = gate
@@ -48,7 +49,7 @@ var levelTextures = [
 ];
 
 var levelFog = [
-    ['rgb(74, 86, 53)', 0.3]
+    ['#4A5635', 0.3]
 ];
 
 // Keeps track if the game is in menu state, paused or in-game
@@ -68,6 +69,69 @@ var scale = 1;
 
 var blocker = document.getElementById('blocker');
 
+var generator = new DungeonGenerator(32, 7, 15, 34, 150);
+
+function gui() {
+    // If debug mode is active then create the stats
+    if (DEBUG) {
+        gui = new dat.GUI();
+
+        var dungeonOptions = {
+            size: 32,
+            minRoomSize: 7,
+            maxRoomSize: 15,
+            maxNumRooms: 34,
+            roomIterations: 150
+        };
+
+        var generationFolder = gui.addFolder('Generation');
+
+        generationFolder.add(dungeonOptions, 'size').min(1).max(300).step(1).onChange(function(value) {
+            generator = new DungeonGenerator(value, dungeonOptions.minRoomSize, dungeonOptions.maxRoomSize, dungeonOptions.maxNumRooms, dungeonOptions.roomIterations);
+            init();
+        });
+
+        generationFolder.add(dungeonOptions, 'minRoomSize').min(2).max(300).step(1).onChange(function(value) {
+            generator = new DungeonGenerator(dungeonOptions.size, value, dungeonOptions.maxRoomSize, dungeonOptions.maxNumRooms, dungeonOptions.roomIterations);
+            init();
+        });
+
+        generationFolder.add(dungeonOptions, 'maxRoomSize').min(2).max(300).step(1).onChange(function(value) {
+            if (!(dungeonOptions.size < value)) {
+                generator = new DungeonGenerator(dungeonOptions.size, dungeonOptions.minRoomSize, value, dungeonOptions.maxNumRooms, dungeonOptions.roomIterations);
+                init();
+            }
+        });
+
+        generationFolder.add(dungeonOptions, 'maxNumRooms').min(1).max(50).step(1).onChange(function(value) {
+            generator = new DungeonGenerator(dungeonOptions.size, dungeonOptions.minRoomSize, dungeonOptions.maxRoomSize, value, dungeonOptions.roomIterations);
+            init();
+        });
+
+        generationFolder.add(dungeonOptions, 'roomIterations').min(1).max(500).step(1).onChange(function(value) {
+            generator = new DungeonGenerator(dungeonOptions.size, dungeonOptions.minRoomSize, dungeonOptions.maxRoomSize, dungeonOptions.maxNumRooms, value);
+            init();
+        });
+
+        var fogOptions = {
+            colour: '#4A5635',
+            distance: 0.3
+        };
+
+        var fogFolder = gui.addFolder('Fog');
+
+        fogFolder.addColor(fogOptions, 'colour').onChange(function(value) {
+            // Adds fog to the scene
+            scene.fog = new t.FogExp2(value, fogOptions.distance);
+        });
+
+        fogFolder.add(fogOptions, 'distance').min(0).max(3).step(0.1).onChange(function(value) {
+            // Adds fog to the scene
+            scene.fog = new t.FogExp2(fogOptions.colour, value);
+        });
+    }
+}
+
 function init() {
     // If debug mode is active then create the stats
     if (DEBUG) {
@@ -76,15 +140,6 @@ function init() {
         stats.setMode(0);
         document.body.appendChild(stats.domElement);
     }
-
-    // Creates a new WebGL Renderer (used to render everything inc. scene)
-    renderer = new t.WebGLRenderer();
-
-    // Sets the Renderer to the window width and height
-    renderer.setSize(WIDTH, HEIGHT);
-
-    // Add the renderers DOM element to the window
-    document.body.appendChild(renderer.domElement);
 
     // Adds the keyboard class that handles keyboard input
     key = new Keyboard();
@@ -152,10 +207,7 @@ function init() {
     setupLevel();
 }
 
-function setupLevel() {
-    // Create a new isntance of DungeonGenerator (size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
-    var generator = new DungeonGenerator(32, 7, 15, 34, 150);
-
+function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations) {
     // Generate the map
     generator.init();
 
@@ -410,22 +462,36 @@ function pointerlockchange(event) {
 }
 
 /**
- * Handles pointer lock controls
- * @param  {EventListener} max
- */
-function pointerlockrequest(event) {
-    // Request the pointer lock from the browser
-    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-    element.requestPointerLock();
-
-    // Show the GUI
-    showGUI = true;
-}
-
-/**
  * Starts the game by calling init and animate
  */
 function start() {
+    // If debug mode is active then setup gui
+    if (DEBUG) {
+        gui();
+    }
+
+    // Creates a new WebGL Renderer (used to render everything inc. scene)
+    renderer = new t.WebGLRenderer();
+
+    // Sets the Renderer to the window width and height
+    renderer.setSize(WIDTH, HEIGHT);
+
+    // Get the element from the document to setup the renderer in
+    var docElement = document.getElementById('gameDivContainer');
+
+    // Add the renderers DOM element to the div element
+    docElement.appendChild(renderer.domElement);
+
+    // Handle on mouse down event
+    renderer.domElement.onmousedown = function(event) {
+        // Request the pointer lock from the browser
+        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+        element.requestPointerLock();
+
+        // Show the GUI
+        showGUI = true;
+    };
+
     init();
     animate();
 }
@@ -444,8 +510,7 @@ function random(min, max) {
 // For handling pointer lock controls
 document.addEventListener('pointerlockchange', pointerlockchange, false);
 document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
-document.addEventListener('click', pointerlockrequest, false);
+document.addEventListener('webkitpointerlockchange', pointerlockchange, false);;
 
 // For handling clicking on gates
 document.addEventListener('mousedown', onMouseDown, false);
