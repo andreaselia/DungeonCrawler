@@ -50,6 +50,12 @@
 		#padding-help {
 			margin-top: 26%;
 		}
+
+		#gameDivContainer {
+			position: absolute;
+			z-index: -1;
+			visibility: hidden;
+		}
 	</style>
 </head>
 
@@ -77,7 +83,7 @@
 		</div>
 	</div>
 
-	<div id="gameDivContainer" style="position: absolute"></div>
+	<div id="gameDivContainer"></div>
 
 	<script src="js/lib/three.min.js"></script>
 	<script src="js/lib/stats.js"></script>

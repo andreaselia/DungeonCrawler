@@ -68,6 +68,7 @@ var spawnSet;
 var scale = 1;
 
 var blocker = document.getElementById('blocker');
+var docElement = document.getElementById('gameDivContainer');
 
 var generator = new DungeonGenerator(32, 7, 15, 34, 150);
 
@@ -377,6 +378,40 @@ function animate() {
         stats.begin();
     }
 
+    renderer.domElement.click = function(event) {
+        console.log(1);
+        if (event.button == 0) {
+            var raycaster = new t.Raycaster();
+
+            // Get a value between 1 and -1 for the mouse position on screen
+            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+            // Set the raycaster from the mouse to the camera
+            raycaster.setFromCamera(mouse, camera);
+
+            // See if there is an intersection
+            var intersects = raycaster.intersectObjects(objects);
+
+            // If there is an intersection
+            if (intersects.length > 0) {
+                // Loop through possible collisions
+                for (var i = 0; i < objects.length; i++) {
+                    // Check the current collision by each object to see if they are a gate and not a wall
+                    if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
+                        // Set this specific map tile to a floor so it no longer registers as a gate collision
+                        map[intersects[0].object.name.x][intersects[0].object.name.z] = Tile.FLOOR;
+
+                        // Remove the gate from the objects array
+                        objects.splice(objects.indexOf(objects[i]), 1);
+
+                        // Remove the gate object from the scene
+                        scene.remove(intersects[0].object);
+                    }
+                }
+            }
+        }
+    }
     // Update and render the game
     update();
     render();
@@ -407,58 +442,32 @@ function onWindowResize() {
 }
 
 /**
- * Handles mouse clicking
- * @param  {EventListener} event
- */
-function onMouseDown(event) {
-    event.preventDefault();
-
-    if (event.button == 0) {
-        var raycaster = new t.Raycaster();
-
-        // Get a value between 1 and -1 for the mouse position on screen
-        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-        mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-
-        // Set the raycaster from the mouse to the camera
-        raycaster.setFromCamera(mouse, camera);
-
-        // See if there is an intersection
-        var intersects = raycaster.intersectObjects(objects);
-
-        // If there is an intersection
-        if (intersects.length > 0) {
-            // Loop through possible collisions
-            for (var i = 0; i < objects.length; i++) {
-                // Check the current collision by each object to see if they are a gate and not a wall
-                if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
-                    // Set this specific map tile to a floor so it no longer registers as a gate collision
-                    map[intersects[0].object.name.x][intersects[0].object.name.z] = Tile.FLOOR;
-
-                    // Remove the gate from the objects array
-                    objects.splice(objects.indexOf(objects[i]), 1);
-
-                    // Remove the gate object from the scene
-                    scene.remove(intersects[0].object);
-                }
-            }
-        }
-    }
-}
-
-/**
  * Handles the showing and hiding of the main menu
  * @param  {EventListener} event
  */
 function pointerlockchange(event) {
     if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
         controls.enabled = true;
+        docElement.style.visibility = 'visible';
         blocker.style.display = 'none';
     }
     else {
         controls.enabled = false;
         blocker.style.display = 'box';
     }
+}
+
+/**
+ * Handles pointer lock controls
+ * @param  {EventListener} max
+ */
+function pointerlockrequest(event) {
+    // Request the pointer lock from the browser
+    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+    element.requestPointerLock();
+
+    // Show the GUI
+    showGUI = true;
 }
 
 /**
@@ -476,21 +485,26 @@ function start() {
     // Sets the Renderer to the window width and height
     renderer.setSize(WIDTH, HEIGHT);
 
-    // Get the element from the document to setup the renderer in
-    var docElement = document.getElementById('gameDivContainer');
-
-    // Add the renderers DOM element to the div element
-    docElement.appendChild(renderer.domElement);
-
-    // Handle on mouse down event
-    renderer.domElement.onmousedown = function(event) {
+    // For handling clicking on gates
+    blocker.onmousedown = function(event) {
         // Request the pointer lock from the browser
         element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
         element.requestPointerLock();
 
         // Show the GUI
         showGUI = true;
-    };
+    }
+
+    docElement.onmousedown = function(event) {
+        console.log(2);
+
+        // Request the pointer lock from the browser
+        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
+        element.requestPointerLock();
+    }
+
+    // Add the renderers DOM element to the div element
+    docElement.appendChild(renderer.domElement);
 
     init();
     animate();
@@ -510,10 +524,7 @@ function random(min, max) {
 // For handling pointer lock controls
 document.addEventListener('pointerlockchange', pointerlockchange, false);
 document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-document.addEventListener('webkitpointerlockchange', pointerlockchange, false);;
-
-// For handling clicking on gates
-document.addEventListener('mousedown', onMouseDown, false);
+document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
 
 // For handling resizing the window and changing the game to fit the new size
 window.addEventListener('resize', onWindowResize, false);
