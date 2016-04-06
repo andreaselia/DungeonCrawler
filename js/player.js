@@ -10,6 +10,9 @@ var Player = function() {
     this.speed = 5;
     this.cube = null;
 
+    /**
+     * Initalizes the player elements
+     */
     this.init = function() {
         // Add the players cube
         this.cube = new t.Mesh(new t.CubeGeometry(0.02, 0.02, 0.02), new t.MeshLambertMaterial());
@@ -18,20 +21,22 @@ var Player = function() {
         this.cube.visible = false;
     };
 
+    /**
+     * Handles any updating the player needs to do
+     * @param  {Number} dt
+     */
     this.update = function(dt) {
         if ((key.down(key.FORWARD) || key.down(key.ARROW_FORWARD))) {
             // Forward movement
             if (this.velocity.z > -this.maxVelocity) {
                 this.velocity.z = -this.speed;
             }
-        }
-        else if ((key.down(key.BACK) || key.down(key.ARROW_BACK))) {
+        } else if ((key.down(key.BACK) || key.down(key.ARROW_BACK))) {
             // Backward movement
             if (this.velocity.z < this.maxVelocity) {
                 this.velocity.z = this.speed;
             }
-        }
-        else {
+        } else {
             this.velocity.z = 0;
         }
 
@@ -40,14 +45,12 @@ var Player = function() {
             if (this.velocity.x > -this.maxVelocity) {
                 this.velocity.x = -this.speed;
             }
-        }
-        else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT))) {
+        } else if ((key.down(key.RIGHT) || key.down(key.ARROW_RIGHT))) {
             // Right movement
             if (this.velocity.x < this.maxVelocity) {
                 this.velocity.x = this.speed;
             }
-        }
-        else {
+        } else {
             this.velocity.x = 0;
         }
 
@@ -77,18 +80,14 @@ var Player = function() {
                 switch (map[x][z]) {
                     case Tile.WALL:
                     case Tile.GATE:
-                        // If the current tile is a wall or gate store the real world position
-                        var tileX = x * scale;
-                        var tileZ = z * scale;
-
                         // Store a collision radius
-                        var radius = 0.2;
+                        var radius = 0.7;
 
                         // Variables used for checking collisions between the tiles around the player in radius
-                        var minTileX = tileX - scale / 2 - radius;
-                        var maxTileX = tileX + scale / 2 + radius;
-                        var minTileZ = tileZ - scale / 2 - radius;
-                        var maxTileZ = tileZ + scale / 2 + radius;
+                        var minTileX = x - radius;
+                        var maxTileX = x + radius;
+                        var minTileZ = z - radius;
+                        var maxTileZ = z + radius;
 
                         // Check the current position by the radius collision radius to check for collisions
                         if (minTileX <= currentPositionX && currentPositionX <= maxTileX && minTileZ <= currentPositionZ && currentPositionZ <= maxTileZ) {

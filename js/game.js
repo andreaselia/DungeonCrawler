@@ -2,8 +2,6 @@
  * @author Andreas Elia / http://github.com/andreaselia/
  */
 
-var element = document.body;
-
 var DEBUG = true; //false;
 
 var stats, gui;
@@ -16,8 +14,6 @@ var ASPECT = WIDTH / HEIGHT;
 
 var scene, camera, renderer, clock, loader;
 var controls, key;
-
-// 0 = floor, 1 = wall, 2 = spawn point, 3 = gate
 
 var Tile = {
     FLOOR: 0,
@@ -35,10 +31,10 @@ var Direction = {
 
 var map = [];
 
-// A list of textures that can be used in the map cubes (walls, floor, ceiling etc)
+// Store loaded textures here
 var textures = [];
 
-// level followed by [floors][walls][ceilings][gate]
+// Current level followed by [floors][walls][ceilings][gate]
 var levelTextures = [
     [
         [0],
@@ -48,6 +44,7 @@ var levelTextures = [
     ]
 ];
 
+// Current level fog
 var levelFog = [
     ['#4A5635', 0.3]
 ];
@@ -58,24 +55,27 @@ var showGUI = false;
 // Objects that can be collided with
 var objects = [];
 
-var mouse = new t.Vector2();
-
+// Store the current radar/minimap draw count
 var radarDrawCount = 0;
 
-var player;
-var spawnSet;
-
-var scale = 1;
+// Store the player and if its spawn has been set
+var player, spawnSet;
 
 var blocker = document.getElementById('blocker');
 var docElement = document.getElementById('gameDivContainer');
 
+var element = blocker;
+
 var generator = new DungeonGenerator(32, 7, 15, 34, 150);
 
+/**
+ * Sets up the GUI element used for modifying in-game elements
+ */
 function gui() {
     // If debug mode is active then create the stats
     if (DEBUG) {
         gui = new dat.GUI();
+        gui.close();
 
         var dungeonOptions = {
             size: 32,
@@ -114,6 +114,21 @@ function gui() {
             init();
         });
 
+        var playerOptions = {
+            speed: 5,
+            maxVelocity: 20
+        };
+
+        var playerFolder = gui.addFolder('Player');
+
+        playerFolder.add(playerOptions, 'speed').min(1).max(10).step(1).onChange(function(value) {
+            player.speed = value;
+        });
+
+        playerFolder.add(playerOptions, 'maxVelocity').min(1).max(100).step(1).onChange(function(value) {
+            player.maxVelocity = value;
+        });
+
         var fogOptions = {
             colour: '#4A5635',
             distance: 0.3
@@ -133,6 +148,9 @@ function gui() {
     }
 }
 
+/**
+ * Initalizes all of the game elements
+ */
 function init() {
     // If debug mode is active then create the stats
     if (DEBUG) {
@@ -208,7 +226,10 @@ function init() {
     setupLevel();
 }
 
-function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations) {
+/**
+ * Sets up the level including walls, floors, ceilings, gates and the players start point
+ */
+function setupLevel() {
     // Generate the map
     generator.init();
 
@@ -219,7 +240,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
     spawnSet = false;
 
     // Geometry used for walls, ceilings and floors
-    var cubeGeometry = new t.CubeGeometry(scale, scale, scale);
+    var cubeGeometry = new t.CubeGeometry(1, 1, 1);
 
     // Loop through the map
     for (var x = 0; x < map.length; x++) {
@@ -231,7 +252,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
                     // If the current tile is a spawn tile and no spawn is set then set it
                     if (map[x][z] == Tile.SPAWN && !spawnSet) {
                         // Set the controls position
-                        controls.getObject().position.set(x * scale, 3 * scale, z * scale);
+                        controls.getObject().position.set(x, 3, z);
 
                         // Set the players cube position
                         player.cube.position.set(x, 3, z);
@@ -249,7 +270,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
                         }));
 
                         // Set the gate position
-                        gate.position.set(x * scale, 3 * scale, z * scale);
+                        gate.position.set(x, 3, z);
 
                         // Set the name for gate collision with mouse detection
                         gate.name = {
@@ -272,7 +293,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
                     }));
 
                     // Set the floor mesh position
-                    floor.position.set(x * scale, 2 * scale, z * scale);
+                    floor.position.set(x, 2, z);
 
                     // Add floor to scene
                     scene.add(floor);
@@ -284,7 +305,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
                     }));
 
                     // Set the ceiling mesh position
-                    ceiling.position.set(x * scale, 4 * scale, z * scale);
+                    ceiling.position.set(x, 4, z);
 
                     // Add ceiling to scene
                     scene.add(ceiling);
@@ -297,7 +318,7 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
                     }));
 
                     // Set the wall mesh position
-                    wall.position.set(x * scale, 3 * scale, z * scale);
+                    wall.position.set(x, 3, z);
 
                     // Add wall to scene
                     scene.add(wall);
@@ -310,6 +331,9 @@ function setupLevel(size, minRoomSize, maxRoomSize, maxNumRooms, roomIterations)
     }
 }
 
+/**
+ * Handles the updating of everything in the game
+ */
 function update() {
     // Get the clocks delta time
     var dt = clock.getDelta();
@@ -318,10 +342,12 @@ function update() {
     player.update(dt);
 }
 
+/**
+ * Handles drawing of the radar/minimap
+ */
 function drawRadar() {
     // Create a radar/minimap canvas element
     var ctx = document.getElementById('radar').getContext('2d');
-    document.getElementById('radar').style.visibility = 'visible';
 
     // Clear the canvas when called
     ctx.clearRect(0, 0, WIDTH, HEIGHT);
@@ -346,14 +372,17 @@ function drawRadar() {
 
     // Drawing the player at it's position but modified to fit on the minimap
     ctx.fillStyle = '#87CA6A';
-    ctx.fillRect(20 + ((player.cube.position.x / scale) * 5), 20 + ((player.cube.position.z / scale) * 5), 4, 4);
+    ctx.fillRect(20 + (player.cube.position.x * 5), 20 + (player.cube.position.z * 5), 4, 4);
 }
 
+/**
+ * Renders everything in the game
+ */
 function render() {
     // Render the scene
     renderer.render(scene, camera);
 
-    // If showGUI is true, render the radar every X amount of seconds
+    // If showGUI is true then render the radar every X time
     if (showGUI) {
         // Increase the radar draw counter
         radarDrawCount++;
@@ -378,40 +407,6 @@ function animate() {
         stats.begin();
     }
 
-    renderer.domElement.click = function(event) {
-        console.log(1);
-        if (event.button == 0) {
-            var raycaster = new t.Raycaster();
-
-            // Get a value between 1 and -1 for the mouse position on screen
-            mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
-            mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
-
-            // Set the raycaster from the mouse to the camera
-            raycaster.setFromCamera(mouse, camera);
-
-            // See if there is an intersection
-            var intersects = raycaster.intersectObjects(objects);
-
-            // If there is an intersection
-            if (intersects.length > 0) {
-                // Loop through possible collisions
-                for (var i = 0; i < objects.length; i++) {
-                    // Check the current collision by each object to see if they are a gate and not a wall
-                    if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
-                        // Set this specific map tile to a floor so it no longer registers as a gate collision
-                        map[intersects[0].object.name.x][intersects[0].object.name.z] = Tile.FLOOR;
-
-                        // Remove the gate from the objects array
-                        objects.splice(objects.indexOf(objects[i]), 1);
-
-                        // Remove the gate object from the scene
-                        scene.remove(intersects[0].object);
-                    }
-                }
-            }
-        }
-    }
     // Update and render the game
     update();
     render();
@@ -433,41 +428,12 @@ function onWindowResize() {
     WIDTH = window.innerWidth;
     HEIGHT = window.innerHeight;
 
-    // Set the camera aspect to the new aspect
+    // Set the camera aspect to the new aspect and update it's projection matrix
     camera.aspect = WIDTH / HEIGHT;
     camera.updateProjectionMatrix();
 
     // Set the renderer set
     renderer.setSize(WIDTH, HEIGHT);
-}
-
-/**
- * Handles the showing and hiding of the main menu
- * @param  {EventListener} event
- */
-function pointerlockchange(event) {
-    if (document.pointerLockElement === element || document.mozPointerLockElement === element || document.webkitPointerLockElement === element) {
-        controls.enabled = true;
-        docElement.style.visibility = 'visible';
-        blocker.style.display = 'none';
-    }
-    else {
-        controls.enabled = false;
-        blocker.style.display = 'box';
-    }
-}
-
-/**
- * Handles pointer lock controls
- * @param  {EventListener} max
- */
-function pointerlockrequest(event) {
-    // Request the pointer lock from the browser
-    element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-    element.requestPointerLock();
-
-    // Show the GUI
-    showGUI = true;
 }
 
 /**
@@ -485,28 +451,13 @@ function start() {
     // Sets the Renderer to the window width and height
     renderer.setSize(WIDTH, HEIGHT);
 
-    // For handling clicking on gates
-    blocker.onmousedown = function(event) {
-        // Request the pointer lock from the browser
-        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-        element.requestPointerLock();
-
-        // Show the GUI
-        showGUI = true;
-    }
-
-    docElement.onmousedown = function(event) {
-        console.log(2);
-
-        // Request the pointer lock from the browser
-        element.requestPointerLock = element.requestPointerLock || element.mozRequestPointerLock || element.webkitRequestPointerLock;
-        element.requestPointerLock();
-    }
-
     // Add the renderers DOM element to the div element
     docElement.appendChild(renderer.domElement);
 
+    // Call the init function to setup the game
     init();
+
+    // Call the animate function to start calling update and render
     animate();
 }
 
@@ -521,12 +472,120 @@ function random(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
-// For handling pointer lock controls
-document.addEventListener('pointerlockchange', pointerlockchange, false);
-document.addEventListener('mozpointerlockchange', pointerlockchange, false);
-document.addEventListener('webkitpointerlockchange', pointerlockchange, false);
+/**
+ * Handles activating and releasing the pointer lock element
+ */
+function pointerlockchange() {
+    // Request for pointer lock as well as a handler for exit pointer lock
+    element.requestPointerLock = element.requestPointerLock;
+    element.exitPointerLock = element.exitPointerLock;
 
-// For handling resizing the window and changing the game to fit the new size
+    // If the pointer lock element is equal to the current element
+    if (document.pointerLockElement === element) {
+        // Set the element to the game (docElement) element
+        element = docElement;
+
+        // Enable the controls
+        controls.enabled = true;
+
+        // Set visible the game element
+        docElement.style.visibility = 'visible';
+
+        // Set hidden the blocker element
+        blocker.style.visibility = 'hidden';
+
+        // Show the minimap element by setting its visibility to visible
+        document.getElementById('radar').style.visibility = 'visible';
+
+        // Show the gui/minimap element
+        showGUI = true;
+
+        // If debug mode print pointer lock status
+        if (DEBUG) {
+            console.log('Pointer lock is now locked');
+        }
+    } else {
+        // This is an exit request so set the element to the blocker
+        element = blocker;
+
+        // Disable the controls
+        controls.enabled = false;
+
+        // Set the game element to hidden
+        docElement.style.visibility = 'hidden';
+
+        // Set the blocker element to visible
+        blocker.style.visibility = 'visible';
+
+        // Hide the minimap element by setting it's visibility to hidden
+        document.getElementById('radar').style.visibility = 'hidden';
+
+        // Set showGUi to false
+        showGUI = false;
+
+        // If debug mode print pointer lock status
+        if (DEBUG) {
+            console.log('Pointer lock no longer locked');
+        }
+    }
+}
+
+/**
+ * Sends a request to activate the pointer lock when mouse is down on blocker element
+ */
+blocker.onmousedown = function() {
+    // Request the pointerlock to the active element
+    element.requestPointerLock();
+}
+
+/**
+ * Handles actions with mouse clicking in-game
+ * @param  {MouseEvent} event
+ */
+docElement.onclick = function(event) {
+    // Prevent mouse default operations
+    event.preventDefault();
+
+    // If the mouse click is a left click
+    if (event.button == 0) {
+        // Create a raycaster
+        var raycaster = new t.Raycaster();
+        var mouse = new t.Vector2();
+
+        // Get a value between 1 and -1 for the mouse position on screen
+        mouse.x = (event.clientX / renderer.domElement.clientWidth) * 2 - 1;
+        mouse.y = -(event.clientY / renderer.domElement.clientHeight) * 2 + 1;
+
+        // Set the raycaster from the camera to the mouse click
+        raycaster.setFromCamera(mouse, camera);
+
+        // Store any intersections with the objects (collidables) array
+        var intersects = raycaster.intersectObjects(objects);
+
+        // If there are any intersections
+        if (intersects.length > 0) {
+            // Loop through all of the cillidables in the objects array
+            for (var i = 0; i < objects.length; i++) {
+                // If the object is a gate and the player is within a set distance
+                if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
+                    // Set the map location of the gate to a floor tile
+                    map[intersects[0].object.name.x][intersects[0].object.name.z] = 0;
+
+                    // Remove the gate from the collisions array
+                    objects.splice(objects.indexOf(objects[i]), 1);
+
+                    // Remove the gate from the scene
+                    scene.remove(intersects[0].object);
+                }
+            }
+        }
+    }
+}
+
+// Event listener for all things pointer lock related
+document.addEventListener('pointerlockchange', pointerlockchange, false);
+
+// Listens for when the window size changes and calls onWindowResize
 window.addEventListener('resize', onWindowResize, false);
 
 // Start the game when the window has loaded
