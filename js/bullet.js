@@ -4,10 +4,10 @@
 
 var Bullet = function() {
     this.velocity = new t.Vector3();
-    this.speed = bulletInfo.speed;
+    this.speed = bulletOptions.speed;
     this.cube = null;
     this.timer = 0;
-    this.maxAliveTime = bulletInfo.maxAliveTime;
+    this.maxAliveTime = bulletOptions.maxAliveTime;
     this.position = new t.Vector3();
     this.raycaster = new t.Raycaster();
     this.direction = new t.Vector3();

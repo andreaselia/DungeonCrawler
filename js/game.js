@@ -38,9 +38,27 @@ var objects = [];
 // Stores fired bullets
 var bullets = [];
 
-var bulletInfo = {
+var dungeonOptions = {
+    size: 32,
+    minRoomSize: 7,
+    maxRoomSize: 15,
+    maxNumRooms: 34,
+    roomIterations: 150
+};
+
+var playerOptions = {
+    speed: 5,
+    maxVelocity: 20
+};
+
+var bulletOptions = {
     speed: 0.1,
     maxAliveTime: 220
+};
+
+var fogOptions = {
+    colour: '#4A5635',
+    distance: 0.3
 };
 
 // Store loaded textures here
@@ -88,14 +106,6 @@ function gui() {
         gui = new dat.GUI();
         gui.close();
 
-        var dungeonOptions = {
-            size: 32,
-            minRoomSize: 7,
-            maxRoomSize: 15,
-            maxNumRooms: 34,
-            roomIterations: 150
-        };
-
         var generationFolder = gui.addFolder('Generation');
 
         generationFolder.add(dungeonOptions, 'size').min(1).max(300).step(1).onChange(function(value) {
@@ -125,11 +135,6 @@ function gui() {
             init();
         });
 
-        var playerOptions = {
-            speed: 5,
-            maxVelocity: 20
-        };
-
         var playerFolder = gui.addFolder('Player');
 
         playerFolder.add(playerOptions, 'speed').min(1).max(10).step(1).onChange(function(value) {
@@ -140,25 +145,15 @@ function gui() {
             player.maxVelocity = value;
         });
 
-        var bulletOptions = {
-            speed: bulletInfo.speed,
-            maxAliveTime: bulletInfo.maxAliveTime
-        };
-
         var bulletFolder = gui.addFolder('Bullet');
 
         bulletFolder.add(bulletOptions, 'speed').min(0.01).max(1).step(0.01).onChange(function(value) {
-            bulletInfo.speed = value;
+            bulletOptions.speed = value;
         });
 
         bulletFolder.add(bulletOptions, 'maxAliveTime').min(1).max(500).step(1).onChange(function(value) {
-            bulletInfo.maxAliveTime = value;
+            bulletOptions.maxAliveTime = value;
         });
-
-        var fogOptions = {
-            colour: '#4A5635',
-            distance: 0.3
-        };
 
         var fogFolder = gui.addFolder('Fog');
 
