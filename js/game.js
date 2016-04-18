@@ -29,7 +29,19 @@ var Direction = {
     WEST: 3
 }
 
+// Stores the map array
 var map = [];
+
+// Objects that can be collided with
+var objects = [];
+
+// Stores fired bullets
+var bullets = [];
+
+var bulletInfo = {
+    speed: 0.1,
+    maxAliveTime: 220
+};
 
 // Store loaded textures here
 var textures = [];
@@ -44,6 +56,8 @@ var levelTextures = [
     ]
 ];
 
+var bulletTexture;
+
 // Current level fog
 var levelFog = [
     ['#4A5635', 0.3]
@@ -51,9 +65,6 @@ var levelFog = [
 
 // Keeps track if the game is in menu state, paused or in-game
 var showGUI = false;
-
-// Objects that can be collided with
-var objects = [];
 
 // Store the current radar/minimap draw count
 var radarDrawCount = 0;
@@ -129,6 +140,21 @@ function gui() {
             player.maxVelocity = value;
         });
 
+        var bulletOptions = {
+            speed: bulletInfo.speed,
+            maxAliveTime: bulletInfo.maxAliveTime
+        };
+
+        var bulletFolder = gui.addFolder('Bullet');
+
+        bulletFolder.add(bulletOptions, 'speed').min(0.01).max(1).step(0.01).onChange(function(value) {
+            bulletInfo.speed = value;
+        });
+
+        bulletFolder.add(bulletOptions, 'maxAliveTime').min(1).max(500).step(1).onChange(function(value) {
+            bulletInfo.maxAliveTime = value;
+        });
+
         var fogOptions = {
             colour: '#4A5635',
             distance: 0.3
@@ -196,6 +222,13 @@ function init() {
     textures.push(loader.load('textures/wall1.png'));
     textures.push(loader.load('textures/ceiling0.png'));
     textures.push(loader.load('textures/gate0.png'));
+
+    // Load the bullet texture
+    bulletTexture = loader.load('textures/bullet.png');
+
+    // Set the bullet texture so it is pixelated
+    bulletTexture.magFilter = t.NearestFilter;
+    bulletTexture.minFilter = t.NearestMipMapLinearFilter;
 
     // Setup light in the scene
     var ambientLight = new t.AmbientLight(0xCCCCCC);
@@ -340,6 +373,26 @@ function update() {
 
     // Update the player
     player.update(dt);
+
+    // Loop through bullets
+    for (var i = 0; i < bullets.length; i++) {
+        // Store the current bullet as a variable
+        var bullet = bullets[i];
+
+        // Update the bullet
+        bullet.update();
+
+        // If the bullet has outlived it's max alive time or if the bullet is
+        // colliding with a wall/gate then remove it
+        if (bullet.timer >= bullet.maxAliveTime || bullet.colliding) {
+            // If the bullet exists
+            if (bullets.indexOf(bullet) > -1) {
+                // Remove the bullet from the array and the scene
+                bullets.splice(bullets.indexOf(bullet), 1);
+                scene.remove(bullet.cube);
+            }
+        }
+    }
 }
 
 /**
@@ -402,6 +455,9 @@ function render() {
  * Handles the calling of the update and render functions as well as stats tracking
  */
 function animate() {
+    // Tells the browser we wish to recall the same function whenever possible
+    requestAnimationFrame(animate);
+
     // If debug mode is active enable stats
     if (DEBUG) {
         stats.begin();
@@ -415,9 +471,6 @@ function animate() {
     if (DEBUG) {
         stats.end();
     }
-
-    // Tells the browser we wish to recall the same function whenever possible
-    requestAnimationFrame(animate);
 }
 
 /**
@@ -564,7 +617,7 @@ docElement.onclick = function(event) {
 
         // If there are any intersections
         if (intersects.length > 0) {
-            // Loop through all of the cillidables in the objects array
+            // Loop through all of the collidables in the objects array
             for (var i = 0; i < objects.length; i++) {
                 // If the object is a gate and the player is within a set distance
                 if (objects[i].name.id == intersects[0].object.name.id && intersects[0].distance < 1.3 && objects.indexOf(objects[i]) > -1 && intersects[0].object.name != '') {
@@ -576,10 +629,36 @@ docElement.onclick = function(event) {
 
                     // Remove the gate from the scene
                     scene.remove(intersects[0].object);
+
+                    // Clear the name
+                    intersects[0].object.name.id = '';
+                    break;
+                } else if (objects[i].name.id == undefined && intersects[0].object.name == '' && intersects[0].distance > 1.3) {
+                    // Create a bullet if we are not looking at a door
+                    createBullet();
+                    break;
                 }
             }
+        } else {
+            // Create a bullet if we are not looking at a door
+            createBullet();
         }
     }
+}
+
+/**
+ * Creates a bullet with the current players rotation
+ */
+function createBullet() {
+    // Push bullet to array
+    var bullet = new Bullet();
+
+    // Initalize the bullet
+    bullet.init();
+
+    // Add the bullet to the bullets array and to the scene
+    bullets.push(bullet);
+    scene.add(bullet.cube);
 }
 
 // Event listener for all things pointer lock related

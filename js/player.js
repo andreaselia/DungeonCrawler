@@ -105,14 +105,18 @@ var Player = function() {
         // If colliding with a wall or gate
         if (colliding) {
             // The player collided so the position is set back to the position before colliding
-            controls.getObject().position.set(storedPositionX, storedPositionY, storedPositionZ);
+            controls.getObject().position.x = storedPositionX;
+            controls.getObject().position.y = storedPositionY;
+            controls.getObject().position.z = storedPositionZ;
 
             // Position has been set back so set colliding to false
             colliding = false;
         }
 
         // The cubes position to the controls position since the cube is used for colliding
-        this.cube.position.set(controls.getObject().position.x, controls.getObject().position.y, controls.getObject().position.z);
+        this.cube.position.x = controls.getObject().position.x;
+        this.cube.position.y = controls.getObject().position.y;
+        this.cube.position.z = controls.getObject().position.z;
 
         // Reset the camera position
         camera.position.set(0, 0, 0);
